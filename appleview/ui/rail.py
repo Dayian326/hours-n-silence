@@ -163,11 +163,12 @@ class SectionLabel(QLabel):
         self._full = text
         self._expanded = True
         self.setObjectName("heading")
-        self.setContentsMargins(14, 10, 8, 4)
+        self.setIndent(14)
+        self.setContentsMargins(0, 8, 0, 2)
 
     def set_expanded(self, on):
         self._expanded = on
-        self.setFixedHeight(26 if on else 14)
+        self.setFixedHeight(30 if on else 14)
         super().setText(self._full if on else "")
         self.update()
 
