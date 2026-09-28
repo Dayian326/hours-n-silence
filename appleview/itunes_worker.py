@@ -31,6 +31,21 @@ HANDOFF_SECONDS = 1
 EARLY_SWITCH_SECONDS = 15
 
 
+# command names as a person would say them, for status messages
+PLAIN = {
+    "play_pause": "play or pause",
+    "next": "skip to the next song",
+    "previous": "go back a song",
+    "play_track": "play that song",
+    "play_playlist": "play that playlist",
+    "play_queue": "play the queue",
+    "seek": "jump to that spot",
+    "volume": "change the volume",
+    "load_tracks": "load that playlist",
+    "launch": "start iTunes",
+}
+
+
 def itunes_is_running():
     for p in psutil.process_iter(["name"]):
         if (p.info["name"] or "").lower() == "itunes.exe":
@@ -72,7 +87,7 @@ class ITunesWorker(QThread):
             self._loop()
         except Exception as e:
             # PyQt aborts the whole app if a thread dies with an error; report instead
-            self.status.emit(f"iTunes worker stopped: {str(e)[:100]}")
+            self.status.emit(f"The iTunes connection stopped: {str(e)[:100]}")
             self.snapshot.emit({"connected": False})
         finally:
             self._it = None
@@ -93,7 +108,7 @@ class ITunesWorker(QThread):
     def _loop(self):
         connected = self._connect()
         if connected:
-            self._load_playlists()
+            self._safe_load_playlists()
         else:
             self.status.emit("iTunes is not running. Open it, or use Start iTunes.")
             self.snapshot.emit({"connected": False})
@@ -105,12 +120,12 @@ class ITunesWorker(QThread):
                         self._handle(name, args)
                     except Exception as e:
                         # a bad command must never take the thread down with it
-                        self.status.emit(f"{name} failed: {str(e)[:100]}")
+                        self.status.emit(f"Could not {PLAIN.get(name, name)}: {str(e)[:100]}")
             except queue.Empty:
                 pass
             if self._it is None:
                 if itunes_is_running() and self._connect():
-                    self._load_playlists()
+                    self._safe_load_playlists()
                 else:
                     time.sleep(1.0)
                     continue
@@ -168,9 +183,12 @@ class ITunesWorker(QThread):
                     piece = art.Item(1)
                     ext = {1: ".bmp", 2: ".jpg", 3: ".png"}.get(piece.Format, ".img")
                     tmp = path + ".src" + ext
-                    piece.SaveArtworkToFile(tmp)
-                    save_artwork(tmp, path)
-                    os.remove(tmp)
+                    try:
+                        piece.SaveArtworkToFile(tmp)
+                        save_artwork(tmp, path)
+                    finally:
+                        if os.path.exists(tmp):
+                            os.remove(tmp)
                 else:
                     path = ""
             except Exception:
@@ -235,6 +253,12 @@ class ITunesWorker(QThread):
             # Apple Music tracks refuse that cast; they are audio
             return False
 
+    def _safe_load_playlists(self):
+        try:
+            self._load_playlists()
+        except Exception as e:
+            self.status.emit(f"Could not read the playlists: {str(e)[:100]}")
+
     def _playlist_by_id(self, playlist_id):
         # With track and database ids of 0, GetITObjectByID returns the playlist itself.
         src = self._it.LibrarySource
@@ -268,7 +292,7 @@ class ITunesWorker(QThread):
     def _handle(self, name, args):
         if name == "launch":
             if self._it is None and self._connect(launch=True):
-                self._load_playlists()
+                self._safe_load_playlists()
             return
         if name == "load_tracks":
             if self._it is not None:
@@ -313,7 +337,7 @@ class ITunesWorker(QThread):
             elif name == "volume":
                 it.SoundVolume = int(args[0])
         except Exception as e:
-            self.status.emit(f"iTunes refused {name}: {str(e)[:80]}")
+            self.status.emit(f"iTunes would not {PLAIN.get(name, name)}: {str(e)[:80]}")
 
     # ---- AppleView's own queue ----
     def _play_next_queued(self):
@@ -342,11 +366,20 @@ class ITunesWorker(QThread):
         if snap["db_id"] == self._queue_current:
             self._last_remaining = remaining
             if self._queue and snap["playing"] and remaining <= HANDOFF_SECONDS:
-                self._play_next_queued()
+                try:
+                    self._play_next_queued()
+                except Exception as e:
+                    self._queue_current = None
+                    self.status.emit(f"Could not play the next queued song: {str(e)[:80]}")
             return
         # the track changed away from the queued song
         near_end = self._last_remaining is not None and self._last_remaining <= EARLY_SWITCH_SECONDS
         if near_end and self._queue:
-            self._play_next_queued()
+            try:
+                self._play_next_queued()
+            except Exception as e:
+                # one bad queued song should not look like iTunes went away
+                self._queue_current = None
+                self.status.emit(f"Could not play the next queued song: {str(e)[:80]}")
         else:
             self._queue_current = None

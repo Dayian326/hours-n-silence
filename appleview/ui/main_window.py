@@ -31,6 +31,7 @@ class MainWindow(QMainWindow):
     # commands out to the worker
     command = pyqtSignal(str, object)      # (name, arg or None)
     minimized_to_mini = pyqtSignal()
+    restored = pyqtSignal()                # full window is back; mini player should go
     quit_requested = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -266,7 +267,12 @@ class MainWindow(QMainWindow):
             else:
                 self.tree.addTopLevelItem(it)
         self.tree.expandAll()
-        if music_item is not None and self._selected_playlist is None:
+        # keep the playlist that was open (this also runs after iTunes reconnects)
+        current = by_id.get(self._selected_playlist) if self._selected_playlist is not None else None
+        if current is not None:
+            self.tree.setCurrentItem(current)
+            self.command.emit("load_tracks", self._selected_playlist)
+        elif music_item is not None:
             self.tree.setCurrentItem(music_item)
             self._on_playlist_clicked(music_item, 0)
 
@@ -397,7 +403,7 @@ class MainWindow(QMainWindow):
         if not self._seeking:
             self.seek.setRange(0, dur)
             self.seek.setValue(pos)
-        self.pos_label.setText(fmt_time(pos))
+            self.pos_label.setText(fmt_time(pos))
         self.dur_label.setText(fmt_time(dur))
         vol = snap.get("volume")
         if vol is not None and not self.vol.isSliderDown():
@@ -444,6 +450,7 @@ class MainWindow(QMainWindow):
         self.show()
         self.raise_()
         self.activateWindow()
+        self.restored.emit()
 
     def _tray_activated(self, reason):
         if reason == QSystemTrayIcon.ActivationReason.Trigger:

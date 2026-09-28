@@ -48,6 +48,7 @@ class App:
 
         # window modes
         self.window.minimized_to_mini.connect(self._show_mini)
+        self.window.restored.connect(self.mini.hide)
         self.mini.expand_requested.connect(self._show_full)
         self.window.quit_requested.connect(self.quit)
 
@@ -88,8 +89,7 @@ class App:
         self.mini.show()
 
     def _show_full(self):
-        self.mini.hide()
-        self.window.restore_from_mini()
+        self.window.restore_from_mini()   # emits restored, which hides the mini player
 
     def run(self):
         self.window.show()
