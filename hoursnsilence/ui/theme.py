@@ -121,6 +121,7 @@ QLabel#bigtitle {{ font-size: 24px; font-weight: 700; }}
 QLabel#description {{ color: #d6d6dd; font-size: 13px; }}
 QLabel#subtitle {{ color: {MUTED}; }}
 QLabel#status {{ color: {MUTED}; font-size: 12px; }}
+QLabel#signature {{ color: rgba(163, 163, 173, 150); font-size: 11px; }}
 QLabel#heading {{ color: {MUTED}; font-size: 12px; font-weight: 600; letter-spacing: 1px; }}
 
 QScrollBar:vertical {{ background: transparent; width: 10px; margin: 2px; }}

@@ -152,3 +152,7 @@ All of them run against a live iTunes and put playback back the way it was.
   sparks, popup, settings, theme, glass, shared widgets
 - `assets/hours_n_silence.ico` - the icon, drawn by `tools/make_shortcut.py`
 - `tools/` - shortcut maker, tests, resource check, screenshot helper
+
+---
+
+Dayian Nadeem, Pandaminds Corporation. September 28, 2026.

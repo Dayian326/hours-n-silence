@@ -105,6 +105,9 @@ class SettingsDialog(QDialog):
         buttons.addStretch(1)
         buttons.addWidget(close)
         root.addLayout(buttons)
+        sig = QLabel("Dayian Nadeem, Pandaminds Corporation. September 28, 2026.")
+        sig.setObjectName("signature")
+        root.addWidget(sig)
         # grey out the color pickers while the cover is in charge
         custom = self.custom.isChecked()
         for _, btn in self.rows.values():
