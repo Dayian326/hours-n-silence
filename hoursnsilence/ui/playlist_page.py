@@ -4,7 +4,7 @@ name and description on the left, the song list on the right."""
 from PyQt6.QtCore import QAbstractListModel, QModelIndex, QRect, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QPainter
 from PyQt6.QtWidgets import (
-    QAbstractItemView, QFrame, QHBoxLayout, QLabel, QLineEdit, QListView, QMenu, QPushButton,
+    QAbstractItemView, QFrame, QHBoxLayout, QLabel, QLineEdit, QListView, QMenu, QPushButton, QScrollArea,
     QStyle, QStyledItemDelegate, QVBoxLayout, QWidget,
 )
 
@@ -144,21 +144,37 @@ class PlaylistPage(QWidget):
         cl = QVBoxLayout(self.card)
         cl.setContentsMargins(18, 18, 18, 18)
         cl.setSpacing(12)
+        # strict stack: cover (shrinks with the window), title (2 lines max),
+        # description (scrolls inside its own box), count, buttons pinned below
+        self._cover_size = 294
+        self._cover_path = ""
+        self._cover_name = ""
         self.cover = QLabel()
         self.cover.setFixedSize(294, 294)
-        cl.addWidget(self.cover)
+        cl.addWidget(self.cover, 0, Qt.AlignmentFlag.AlignHCenter)
         self.title = QLabel("Music")
         self.title.setObjectName("bigtitle")
         self.title.setWordWrap(True)
+        self.title.setFixedHeight(62)
+        self.title.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         cl.addWidget(self.title)
         self.description = QLabel("")
         self.description.setObjectName("description")
         self.description.setWordWrap(True)
-        cl.addWidget(self.description)
+        self.description.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.description.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.desc_box = QScrollArea()
+        self.desc_box.setWidget(self.description)
+        self.desc_box.setWidgetResizable(True)
+        self.desc_box.setFrameShape(QFrame.Shape.NoFrame)
+        self.desc_box.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.desc_box.setStyleSheet("QScrollArea, QScrollArea > QWidget > QWidget { background: transparent; }")
+        self.desc_box.setMinimumHeight(40)
+        cl.addWidget(self.desc_box, 1)
         self.meta = QLabel("")
         self.meta.setObjectName("subtitle")
+        self.meta.setFixedHeight(20)
         cl.addWidget(self.meta)
-        cl.addStretch(1)
         buttons = QHBoxLayout()
         buttons.setSpacing(8)
         self.play_btn = QPushButton("Play")
@@ -223,8 +239,10 @@ class PlaylistPage(QWidget):
         self.title.setText(name)
         cover = (playlist or {}).get("cover") or ""
         # no cover of its own (Music, a few playlists): borrow the playing song's art
-        self.cover.setPixmap(cover_pixmap(cover or fallback_art, name, 294, 12))
+        self._cover_path, self._cover_name = cover or fallback_art, name
+        self._paint_cover()
         self.backdrop.set_image(cover or fallback_art)
+        self.title.setToolTip(name)
         if playlist and playlist.get("music"):
             self.description.setText("Everything in your library.")
         elif playlist and playlist.get("description"):
@@ -238,7 +256,17 @@ class PlaylistPage(QWidget):
     def set_fallback_art(self, path):
         if self._playlist and not self._playlist.get("cover"):
             self.backdrop.set_image(path)
-            self.cover.setPixmap(cover_pixmap(path, self._playlist["name"], 294, 12))
+            self._cover_path = path
+            self._paint_cover()
+
+    def _paint_cover(self):
+        # everything below the cover needs about 300 px; the cover takes what is left
+        room = self.height() - 22 * 2 - 18 * 2 - 300
+        size = max(140, min(294, room))
+        if size != self._cover_size:
+            self._cover_size = size
+            self.cover.setFixedSize(size, size)
+        self.cover.setPixmap(cover_pixmap(self._cover_path, self._cover_name or "?", size, 12))
 
     def set_tracks(self, tracks):
         self.model.set_tracks(tracks, self.search.text())
@@ -271,4 +299,6 @@ class PlaylistPage(QWidget):
 
     def resizeEvent(self, e):
         self.backdrop.setGeometry(self.rect())
+        if self._playlist is not None:
+            self._paint_cover()
         super().resizeEvent(e)
