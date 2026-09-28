@@ -18,10 +18,22 @@ collapsed to see the name), recently played playlists pinned at the top of
 the rail, and an immersive playlist page: the cover blurred across the whole
 page, a card with the cover, name, description and Play / Shuffle, the songs
 on the right. The accent color follows the art of whatever is playing.
-Panels are frosted glass: Windows blurs whatever is behind the window and
-the panels sit on top of it, translucent, with a thin edge. The title bar is
+Panels are black glass: Windows blurs whatever is behind the window and
+the panels sit on top of it as dark translucent panes with a hairline edge.
+The player bar carries a faint edge in the accent color. The title bar is
 dark regardless of your Windows accent setting. If Windows cannot do the
 blur, the panels fall back to solid dark.
+
+**Beat sparks.** While the mini player is on screen, Hours N Silence
+listens to what is coming out of your speakers (a Windows loopback of the
+output device; nothing is recorded) and on every beat sends sparks in the
+cover's colors across the card, with a pulse of the edge. The listener
+starts when the mini player shows and stops when it hides. Virtual devices
+like Sonar's channels do not offer a loopback, so it listens on the
+physical output carrying the final mix.
+
+**Volume popup** watches every output device, so the knob is caught
+whichever device it is turning; the popup names the device.
 
 - **Popup card** in the bottom-right corner whenever the system volume changes
   (knob, mouse, taskbar slider all count): album art, song, artist, volume bar.

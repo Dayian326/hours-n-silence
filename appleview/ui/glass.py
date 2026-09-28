@@ -21,7 +21,7 @@ ACCENT_ENABLE_ACRYLICBLURBEHIND = 4
 WCA_ACCENT_POLICY = 19
 
 # tint over the blur: dark, but see-through enough that the desktop reads
-GLASS_TINT = (16, 16, 20, 0xA6)   # dark enough that white text always reads
+GLASS_TINT = (8, 8, 10, 0xB4)     # black glass: mostly dark, the desktop only ghosts through
 
 
 class _MARGINS(ctypes.Structure):

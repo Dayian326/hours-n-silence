@@ -121,7 +121,7 @@ class MainWindow(QMainWindow):
 
         # player bar
         bar = QFrame()
-        bar.setObjectName("panel")
+        bar.setObjectName("playerbar")   # a faint accent edge around the player
         bh = QHBoxLayout(bar)
         bh.setContentsMargins(12, 10, 12, 10)
         bh.setSpacing(14)

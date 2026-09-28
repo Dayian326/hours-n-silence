@@ -18,6 +18,33 @@ def _usable(h, s, l):
     return s >= 0.25 and 0.22 <= l <= 0.72
 
 
+def spark_colors(image_path, n=4):
+    """A few lively colors from the art, for the beat sparks. Falls back to the accent."""
+    if not image_path or not os.path.exists(image_path):
+        return [DEFAULT]
+    try:
+        im = Image.open(image_path).convert("RGB")
+        im.thumbnail((96, 96))
+        q = im.quantize(colors=10, method=Image.Quantize.MEDIANCUT)
+        pal = q.getpalette()[:30]
+        scored = []
+        for count, idx in q.getcolors():
+            r, g, b = pal[idx * 3: idx * 3 + 3]
+            h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+            if l < 0.12:
+                continue
+            l = min(max(l, 0.5), 0.75)
+            s = min(max(s, 0.45), 1.0)
+            rr, gg, bb = colorsys.hls_to_rgb(h, l, s)
+            scored.append((s * 0.6 + count / (96 * 96) * 0.4,
+                           f"#{int(rr * 255):02x}{int(gg * 255):02x}{int(bb * 255):02x}"))
+        scored.sort(reverse=True)
+        colors = [c for _, c in scored[:n]]
+        return colors or [DEFAULT]
+    except Exception:
+        return [DEFAULT]
+
+
 def vibrant_color(image_path):
     if not image_path or not os.path.exists(image_path):
         return DEFAULT

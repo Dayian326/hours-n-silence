@@ -7,8 +7,9 @@ sys.coinit_flags = 2  # noqa: E402
 
 from PyQt6.QtWidgets import QApplication  # noqa: E402
 
+from .audio import LoopbackMeter  # noqa: E402
 from .itunes_worker import ITunesWorker  # noqa: E402
-from .palette import vibrant_color  # noqa: E402
+from .palette import spark_colors, vibrant_color  # noqa: E402
 from .ui.main_window import MainWindow  # noqa: E402
 from .ui.mini_player import MiniPlayer  # noqa: E402
 from .ui.popup import NowPlayingPopup  # noqa: E402
@@ -42,6 +43,7 @@ class App:
         self.mini = MiniPlayer()
         self.popup = NowPlayingPopup()
         self.volume = VolumeWatcher()
+        self.meter = None            # the beat listener, only alive while the mini player shows
 
         self._art_path = ""
         self._last_track_id = None
@@ -69,6 +71,10 @@ class App:
         # the knob
         self.volume.changed.connect(self._on_volume)
 
+        # the beat listener follows the mini player
+        self.mini.shown.connect(self._start_meter)
+        self.mini.hidden.connect(self._stop_meter)
+
     def _command(self, name, arg):
         if arg is None:
             self.worker.send(name)
@@ -94,6 +100,7 @@ class App:
         self.mini.set_art(path)
         self.popup.set_art(path)
         self._chameleon(path)
+        self.mini.set_spark_colors(spark_colors(path), accent())
 
     def _chameleon(self, art_path):
         """The accent follows the playing song's art."""
@@ -106,8 +113,24 @@ class App:
         self.popup.apply_accent()
         self.mini.apply_accent()
 
-    def _on_volume(self, percent):
-        self.popup.show_volume(percent)
+    def _on_volume(self, percent, device):
+        self.popup.show_volume(percent, device)
+
+    def _start_meter(self):
+        if self.meter is not None:
+            return
+        self.meter = LoopbackMeter()
+        self.meter.level.connect(self.mini.on_level)
+        self.meter.status.connect(self.window.set_status)
+        self.meter.start()
+
+    def _stop_meter(self):
+        if self.meter is None:
+            return
+        m = self.meter
+        self.meter = None
+        m.stop()
+        m.wait(3000)
 
     def _show_mini(self):
         # first time: top-right corner; after that, wherever it was dragged to
@@ -138,6 +161,7 @@ class App:
         self.worker.start()
         self.volume.start()
         code = self.qt.exec()
+        self._stop_meter()
         self.worker.stop()
         self.worker.wait(2000)
         return code

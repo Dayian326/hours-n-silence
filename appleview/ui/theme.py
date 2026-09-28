@@ -43,12 +43,12 @@ def rgba(hex_color, alpha):
     return f"rgba({r}, {g}, {b}, {alpha})"
 
 
-def _glass_fill(alpha, highlight=34):
-    """White-tinted fill with a soft highlight at the top edge, like frosted glass."""
+def _glass_fill(alpha, highlight=10):
+    """Black glass: a dark tinted pane with only a whisper of light along the top edge."""
     return (f"qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-            f"stop:0 rgba(255, 255, 255, {alpha + highlight}), "
-            f"stop:0.08 rgba(255, 255, 255, {alpha}), "
-            f"stop:1 rgba(255, 255, 255, {alpha}))")
+            f"stop:0 rgba(255, 255, 255, {highlight}), "
+            f"stop:0.06 rgba(0, 0, 0, {alpha}), "
+            f"stop:1 rgba(0, 0, 0, {alpha}))")
 
 
 def build_qss(accent_color=None):
@@ -56,10 +56,10 @@ def build_qss(accent_color=None):
     a_dim = darker(a)
     glass = _current["glass"]
     root_bg = "transparent" if glass else BG
-    panel_bg = _glass_fill(20) if glass else PANEL
-    card_bg = _glass_fill(26) if glass else PANEL
-    edge = "rgba(255, 255, 255, 38)"
-    edge_soft = "rgba(255, 255, 255, 26)"
+    panel_bg = _glass_fill(120) if glass else PANEL
+    card_bg = _glass_fill(150) if glass else PANEL
+    edge = "rgba(255, 255, 255, 30)"
+    edge_soft = "rgba(255, 255, 255, 20)"
     return f"""
 * {{
     font-family: "Segoe UI Variable", "Segoe UI", sans-serif;
@@ -69,7 +69,8 @@ def build_qss(accent_color=None):
 QMainWindow, QWidget#root {{ background: {root_bg}; }}
 QWidget#panel, QFrame#panel {{ background: {panel_bg}; border: 1px solid {edge_soft}; border-radius: 14px; }}
 QWidget#card, QFrame#card {{ background: {card_bg}; border: 1px solid {edge}; border-radius: 12px; }}
-QFrame#glass {{ background: {_glass_fill(22)}; border: 1px solid {edge}; border-radius: 16px; }}
+QFrame#glass {{ background: {_glass_fill(130)}; border: 1px solid {edge}; border-radius: 16px; }}
+QFrame#playerbar {{ background: {_glass_fill(140)}; border: 1px solid {rgba(a, 80)}; border-radius: 14px; }}
 
 QLineEdit {{
     background: rgba(255, 255, 255, 16); border: 1px solid {edge_soft}; border-radius: 8px;

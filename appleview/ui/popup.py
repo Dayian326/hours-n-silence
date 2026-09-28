@@ -92,8 +92,10 @@ class NowPlayingPopup(QWidget):
         self.art.set_art(path)
 
     # ---- showing ----
-    def show_volume(self, percent):
-        self.line.setText(f"Volume {percent}")
+    def show_volume(self, percent, device=""):
+        # device names are long ("SteelSeries Sonar - Media (...)"); keep the useful bit
+        short = device.split("(")[0].replace("SteelSeries Sonar - ", "").strip()
+        self.line.setText(f"Volume {percent}" + (f"  ·  {short}" if short else ""))
         self.bar.setValue(int(percent))
         self.bar.show()
         self._pop()

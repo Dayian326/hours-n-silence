@@ -1,8 +1,10 @@
-"""The small always-on-top card shown when the main window is minimized."""
+"""The small always-on-top card shown when the main window is minimized.
+While it is on screen, beat sparks in the cover's colors fly across it."""
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
+from .sparks import SparkLayer
 from .widgets import ArtLabel, IconButton, Transport
 
 
@@ -11,6 +13,8 @@ class MiniPlayer(QWidget):
     previous = pyqtSignal()
     play_pause = pyqtSignal()
     next = pyqtSignal()
+    shown = pyqtSignal()
+    hidden = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -28,6 +32,11 @@ class MiniPlayer(QWidget):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)  # card edge = window edge
         outer.addWidget(card)
+
+        # sparks live between the glass and the text
+        self.sparks = SparkLayer(card)
+        self.sparks.setGeometry(0, 0, 340, 100)
+        self.sparks.lower()
 
         row = QHBoxLayout(card)
         row.setContentsMargins(12, 10, 10, 10)
@@ -66,12 +75,29 @@ class MiniPlayer(QWidget):
     def set_art(self, path):
         self.art.set_art(path)
 
+    def set_spark_colors(self, colors, edge):
+        self.sparks.set_colors(colors, edge)
+
+    def on_level(self, bass, overall, beat):
+        if self.isVisible():
+            self.sparks.on_level(bass, overall, beat)
+
     def apply_accent(self):
         self.transport.set_playing(self.transport.play_btn._icon_name == "SP_MediaPause")
 
     def place_default(self):
         screen = QApplication.primaryScreen().availableGeometry()
         self.move(screen.right() - self.width() - 18, screen.top() + 18)
+
+    def showEvent(self, e):
+        super().showEvent(e)
+        self.sparks.start()
+        self.shown.emit()
+
+    def hideEvent(self, e):
+        self.sparks.stop()
+        self.hidden.emit()
+        super().hideEvent(e)
 
     # ---- drag anywhere ----
     def mousePressEvent(self, e):
