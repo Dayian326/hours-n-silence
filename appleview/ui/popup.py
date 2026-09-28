@@ -29,7 +29,7 @@ class NowPlayingPopup(QWidget):
         card = QWidget(self)
         card.setObjectName("card")
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setContentsMargins(0, 0, 0, 0)  # card edge = window edge
         outer.addWidget(card)
 
         row = QHBoxLayout(card)

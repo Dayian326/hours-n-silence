@@ -43,8 +43,8 @@ def build_qss(accent_color=None):
     glass = _current["glass"]
     # with glass on, panels let the frosted desktop through; off, they are solid
     root_bg = "transparent" if glass else BG
-    panel_bg = "rgba(23, 23, 27, 150)" if glass else PANEL
-    card_bg = "rgba(23, 23, 27, 165)" if glass else PANEL
+    panel_bg = "rgba(20, 20, 24, 105)" if glass else PANEL
+    card_bg = "rgba(20, 20, 24, 60)" if glass else PANEL
     edge = "rgba(255, 255, 255, 18)"
     return f"""
 * {{
@@ -54,8 +54,8 @@ def build_qss(accent_color=None):
 }}
 QMainWindow, QWidget#root {{ background: {root_bg}; }}
 QWidget#panel, QFrame#panel {{ background: {panel_bg}; border: 1px solid {edge}; border-radius: 12px; }}
-QWidget#card, QFrame#card {{ background: {card_bg}; border: 1px solid {rgba(a, 90)}; border-radius: 14px; }}
-QFrame#glass {{ background: rgba(23, 23, 27, 150); border: 1px solid rgba(255, 255, 255, 26); border-radius: 16px; }}
+QWidget#card, QFrame#card {{ background: {card_bg}; border: 1px solid {rgba(a, 110)}; border-radius: 9px; }}
+QFrame#glass {{ background: rgba(20, 20, 24, 120); border: 1px solid rgba(255, 255, 255, 26); border-radius: 16px; }}
 
 QLineEdit {{
     background: rgba(31, 31, 36, 190); border: 1px solid {edge}; border-radius: 8px;

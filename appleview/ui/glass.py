@@ -1,19 +1,27 @@
-"""Frosted glass and a dark title bar, straight from Windows.
+"""Frosted glass, rounded corners and a dark title bar, straight from Windows.
 
-Windows 11 can blur whatever is behind a window (the same effect its own
-menus and flyouts use). We ask for it per window with two calls into the
-desktop window manager. Older builds fall back to the acrylic blur that
-Windows 10 exposed. If neither works the window just stays dark and flat.
+Windows can blur whatever is behind a window (the same effect its own menus
+and flyouts use). We ask for the older acrylic blur first because it lets us
+choose how dark the tint is; the newer Windows 11 backdrop is the fallback
+(its tint is fixed and quite heavy). Windows 11 also rounds the corners of
+frameless windows for us, so the blur is clipped to the card shape.
 """
 
 import ctypes
 from ctypes import wintypes
 
 DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+DWMWA_WINDOW_CORNER_PREFERENCE = 33
+DWMWCP_ROUND = 2
+DWMWA_CAPTION_COLOR = 35
+DWMWA_TEXT_COLOR = 36
 DWMWA_SYSTEMBACKDROP_TYPE = 38
 DWMSBT_TRANSIENTWINDOW = 3          # acrylic
 ACCENT_ENABLE_ACRYLICBLURBEHIND = 4
 WCA_ACCENT_POLICY = 19
+
+# tint over the blur: dark, but see-through enough that the desktop reads
+GLASS_TINT = (20, 20, 24, 0x88)
 
 
 class _MARGINS(ctypes.Structure):
@@ -33,8 +41,8 @@ def _hwnd(widget):
     return wintypes.HWND(int(widget.winId()))
 
 
-DWMWA_CAPTION_COLOR = 35
-DWMWA_TEXT_COLOR = 36
+def _set_attr(widget, attr, value):
+    ctypes.windll.dwmapi.DwmSetWindowAttribute(_hwnd(widget), attr, ctypes.byref(value), ctypes.sizeof(value))
 
 
 def _colorref(hex_color):
@@ -43,27 +51,21 @@ def _colorref(hex_color):
     return ctypes.c_uint((b << 16) | (g << 8) | r)
 
 
-def dark_title_bar(widget, caption="#17171b", text="#ececef"):
+def dark_title_bar(widget, caption="#151518", text="#ececef"):
     """Dark title bar even when Windows is set to color title bars with its accent."""
     try:
-        dwm = ctypes.windll.dwmapi
-        value = ctypes.c_int(1)
-        dwm.DwmSetWindowAttribute(_hwnd(widget), DWMWA_USE_IMMERSIVE_DARK_MODE, ctypes.byref(value), ctypes.sizeof(value))
-        for attr, color in ((DWMWA_CAPTION_COLOR, caption), (DWMWA_TEXT_COLOR, text)):
-            c = _colorref(color)
-            dwm.DwmSetWindowAttribute(_hwnd(widget), attr, ctypes.byref(c), ctypes.sizeof(c))
+        _set_attr(widget, DWMWA_USE_IMMERSIVE_DARK_MODE, ctypes.c_int(1))
+        _set_attr(widget, DWMWA_CAPTION_COLOR, _colorref(caption))
+        _set_attr(widget, DWMWA_TEXT_COLOR, _colorref(text))
     except Exception:
         pass
 
 
-def _dwm_acrylic(widget):
-    dwm = ctypes.windll.dwmapi
-    margins = _MARGINS(-1, -1, -1, -1)
-    if dwm.DwmExtendFrameIntoClientArea(_hwnd(widget), ctypes.byref(margins)) != 0:
-        return False
-    kind = ctypes.c_int(DWMSBT_TRANSIENTWINDOW)
-    return dwm.DwmSetWindowAttribute(_hwnd(widget), DWMWA_SYSTEMBACKDROP_TYPE,
-                                     ctypes.byref(kind), ctypes.sizeof(kind)) == 0
+def round_corners(widget):
+    try:
+        _set_attr(widget, DWMWA_WINDOW_CORNER_PREFERENCE, ctypes.c_int(DWMWCP_ROUND))
+    except Exception:
+        pass
 
 
 def _legacy_acrylic(widget, tint):
@@ -75,17 +77,30 @@ def _legacy_acrylic(widget, tint):
     return bool(fn(_hwnd(widget), ctypes.byref(data)))
 
 
-def apply_glass(widget, tint=(23, 23, 27, 200)):
+def _dwm_acrylic(widget):
+    dwm = ctypes.windll.dwmapi
+    margins = _MARGINS(-1, -1, -1, -1)
+    if dwm.DwmExtendFrameIntoClientArea(_hwnd(widget), ctypes.byref(margins)) != 0:
+        return False
+    return dwm.DwmSetWindowAttribute(_hwnd(widget), DWMWA_SYSTEMBACKDROP_TYPE,
+                                     ctypes.byref(ctypes.c_int(DWMSBT_TRANSIENTWINDOW)),
+                                     ctypes.sizeof(ctypes.c_int)) == 0
+
+
+def apply_glass(widget, tint=GLASS_TINT, frameless=False):
     """Frost the area behind this top-level window. Returns which method took."""
-    dark_title_bar(widget)
+    if frameless:
+        round_corners(widget)
+    else:
+        dark_title_bar(widget)
     try:
-        if _dwm_acrylic(widget):
-            return "dwm"
+        if _legacy_acrylic(widget, tint):
+            return "acrylic"
     except Exception:
         pass
     try:
-        if _legacy_acrylic(widget, tint):
-            return "legacy"
+        if _dwm_acrylic(widget):
+            return "dwm"
     except Exception:
         pass
     return "none"

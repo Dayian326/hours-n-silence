@@ -133,8 +133,8 @@ class App:
             set_glass(False)
             self.qt.setStyleSheet(build_qss())
         else:
-            apply_glass(self.mini)
-            apply_glass(self.popup)
+            apply_glass(self.mini, frameless=True)
+            apply_glass(self.popup, frameless=True)
         self.worker.start()
         self.volume.start()
         code = self.qt.exec()
