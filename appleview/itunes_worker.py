@@ -96,6 +96,7 @@ class ITunesWorker(QThread):
             self._load_playlists()
         else:
             self.status.emit("iTunes is not running. Open it, or use Start iTunes.")
+            self.snapshot.emit({"connected": False})
         while not self._stop:
             try:
                 while True:

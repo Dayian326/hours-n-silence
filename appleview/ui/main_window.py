@@ -227,7 +227,8 @@ class MainWindow(QMainWindow):
 
         # tray
         self.tray = QSystemTrayIcon(make_app_icon(), self)
-        menu = QMenu()
+        menu = QMenu(self)
+        self._tray_menu = menu
         a_show = QAction("Open AppleView", menu)
         a_show.triggered.connect(self.restore_from_mini)
         a_mini = QAction("Mini player", menu)
@@ -384,10 +385,12 @@ class MainWindow(QMainWindow):
             self.transport.set_playing(False)
             return
         self.start_btn.hide()
-        self.now_title.setText(snap.get("name") or "Nothing playing")
+        self.now_title.setText(self._elide(self.now_title, snap.get("name") or "Nothing playing"))
         artist = snap.get("artist") or ""
         album = snap.get("album") or ""
-        self.now_sub.setText(f"{artist}  -  {album}" if artist and album else artist or album)
+        self.now_sub.setText(self._elide(self.now_sub, f"{artist}  -  {album}" if artist and album else artist or album))
+        self.now_title.setToolTip(snap.get("name") or "")
+        self.now_sub.setToolTip(f"{artist} - {album}")
         self.transport.set_playing(bool(snap.get("playing")))
         dur = int(snap.get("duration") or 0)
         pos = int(snap.get("position") or 0)
@@ -406,6 +409,12 @@ class MainWindow(QMainWindow):
 
     def set_art(self, path):
         self.art.set_art(path)
+
+    @staticmethod
+    def _elide(label, text):
+        """Long titles get a trailing ellipsis instead of running off the edge."""
+        width = max(label.width() - 4, 120)
+        return label.fontMetrics().elidedText(text, Qt.TextElideMode.ElideRight, width)
 
     def set_status(self, text):
         self.status.setText(text)

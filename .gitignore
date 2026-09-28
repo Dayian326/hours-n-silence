@@ -9,3 +9,5 @@ dist/
 build/
 *.spec
 scratch/
+probe_artwork.*
+appleview.log
