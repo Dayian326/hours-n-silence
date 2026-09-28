@@ -149,9 +149,11 @@ class DiscordPresence(QThread):
         else:
             kwargs["state"] = ("Paused  -  " + state)[:128]
         try:
-            rpc.update(activity_type=2, **kwargs)     # 2 = "Listening to"
-        except TypeError:
-            rpc.update(**kwargs)
+            from pypresence import ActivityType
+            rpc.update(activity_type=ActivityType.LISTENING, **kwargs)     # "Listening to"
+        except Exception:
+            rpc.update(**kwargs)                                            # older library: "Playing"
+
 
     @staticmethod
     def _close(rpc):
