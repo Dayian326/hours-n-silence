@@ -41,14 +41,26 @@ pip install -r requirements.txt
 
 ## Run
 
-With iTunes open (AppleView will not start it on its own; there is a Start
-iTunes button if it is closed):
-
 ```
 python -m appleview
 ```
 
-Closing the window quits. Minimizing goes to the mini player.
+If iTunes is closed, AppleView starts it in the background and minimizes its
+window, so AppleView is the only thing you open. iTunes stays running when
+you close AppleView. Closing the window quits AppleView; minimizing goes to
+the mini player.
+
+## Pin it to the taskbar
+
+Once:
+
+```
+python tools/make_shortcut.py
+```
+
+That draws the icon (`assets/appleview.ico`) and puts an AppleView shortcut
+in the Start Menu and on the Desktop. Open AppleView from either, right-click
+its taskbar icon, Pin to taskbar. Safe to run again any time.
 
 ## Day-one test
 
@@ -78,5 +90,8 @@ and your playlists. Confirms the scripting hook works.
 - `appleview/volume.py` - watches the Windows master volume
 - `appleview/cache.py` - artwork cache (`artwork_cache/`, gitignored)
 - `appleview/ui/` - main window, mini player, popup, theme, shared widgets
+- `assets/appleview.ico` - the icon, drawn by `tools/make_shortcut.py`
 - `probe.py` - connection test, safe to run any time
+- `tools/make_shortcut.py` - icon plus Start Menu and Desktop shortcuts
+- `tools/queue_test.py` - proves the queue handoff against a running iTunes
 - `tools/shot.py` - screenshot helper used while testing the UI

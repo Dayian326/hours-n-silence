@@ -94,10 +94,15 @@ class ITunesWorker(QThread):
             pythoncom.CoUninitialize()
 
     def _connect(self, launch=False):
-        if not launch and not itunes_is_running():
+        was_running = itunes_is_running()
+        if not launch and not was_running:
             return False
         try:
+            if not was_running:
+                self.status.emit("Starting iTunes in the background")
             self._it = gencache.EnsureDispatch("iTunes.Application")
+            if not was_running:
+                self._tuck_itunes_away()
             self.status.emit(f"Connected to iTunes {self._it.Version}")
             return True
         except Exception as e:
@@ -105,8 +110,16 @@ class ITunesWorker(QThread):
             self._it = None
             return False
 
+    def _tuck_itunes_away(self):
+        """iTunes opens its window when we start it; minimize it so AppleView is the face."""
+        try:
+            self._it.BrowserWindow.Minimized = True
+        except Exception:
+            pass
+
     def _loop(self):
-        connected = self._connect()
+        # AppleView is meant to be the only thing you open: start iTunes if it is closed.
+        connected = self._connect(launch=True)
         if connected:
             self._safe_load_playlists()
         else:

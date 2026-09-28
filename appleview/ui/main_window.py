@@ -1,6 +1,8 @@
 """The full window: playlists on the left, songs on the right, player bar
 below, and a queue panel that slides in on the right."""
 
+import os
+
 from PyQt6.QtCore import QEvent, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QAction, QColor, QIcon, QPainter, QPixmap
 from PyQt6.QtWidgets import (
@@ -13,7 +15,16 @@ from .theme import ACCENT, MUTED, fmt_time
 from .widgets import ArtLabel, IconButton, Transport
 
 
+ICON_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                         "assets", "appleview.ico")
+
+
 def make_app_icon():
+    # the same picture the shortcut uses, so the taskbar and the window match
+    if os.path.exists(ICON_PATH):
+        icon = QIcon(ICON_PATH)
+        if not icon.isNull():
+            return icon
     pix = QPixmap(64, 64)
     pix.fill(Qt.GlobalColor.transparent)
     p = QPainter(pix)

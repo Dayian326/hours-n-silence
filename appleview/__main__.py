@@ -15,8 +15,21 @@ from .ui.theme import QSS  # noqa: E402
 from .volume import VolumeWatcher  # noqa: E402
 
 
+APP_ID = "Dayian.AppleView"   # taskbar identity; the shortcut carries the same id
+
+
+def _claim_taskbar_identity():
+    """Without this Windows files the window under python.exe on the taskbar."""
+    try:
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)
+    except Exception:
+        pass
+
+
 class App:
     def __init__(self, argv):
+        _claim_taskbar_identity()
         self.qt = QApplication(argv)
         self.qt.setStyle("Fusion")
         self.qt.setStyleSheet(QSS)
