@@ -16,7 +16,7 @@ from .ui.theme import accent, build_qss, set_accent  # noqa: E402
 from .volume import VolumeWatcher  # noqa: E402
 
 
-APP_ID = "Dayian.AppleView"   # taskbar identity; the shortcut carries the same id
+APP_ID = "Dayian.HoursNSilence"   # taskbar identity; the shortcut carries the same id
 
 
 def _claim_taskbar_identity():
@@ -35,7 +35,7 @@ class App:
         self.qt.setStyle("Fusion")
         self.qt.setStyleSheet(build_qss())
         self.qt.setQuitOnLastWindowClosed(False)
-        self.qt.setApplicationName("AppleView")
+        self.qt.setApplicationName("Hours N Silence")
 
         self.worker = ITunesWorker()
         self.window = MainWindow()

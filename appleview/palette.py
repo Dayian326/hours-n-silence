@@ -10,7 +10,7 @@ import os
 
 from PIL import Image
 
-DEFAULT = "#fa586a"
+DEFAULT = "#dc6ab0"
 _cache = {}
 
 

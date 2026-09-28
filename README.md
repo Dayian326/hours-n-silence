@@ -1,9 +1,12 @@
-# AppleView
+# Hours N Silence
+
+Formerly AppleView. The Python package is still called `appleview`, so the
+run command has not changed.
 
 A minimalist, private music player for Windows that sits on top of old iTunes.
 
 iTunes keeps doing everything it does today: downloads, iCloud sync, the mixed
-library of downloaded files and Apple Music tracks. AppleView only reads from
+library of downloaded files and Apple Music tracks. Hours N Silence only reads from
 iTunes and sends it play, pause, next, previous, seek and volume. It never
 writes to the library.
 
@@ -32,7 +35,7 @@ blur, the panels fall back to solid dark.
   Double-click a song and iTunes carries on with the songs after it, the way
   it does when you click in iTunes itself. (iTunes' scripting hook can only
   do that by starting the playlist and hopping forward, muted, about 30 ms a
-  hop; past song 400 AppleView plays the song directly and queues the rest.)
+  hop; past song 400 Hours N Silence plays the song directly and queues the rest.)
 - **Shuffle and repeat** buttons in the player bar. They set iTunes' own
   shuffle and repeat for the playlist that is playing.
 - **Seek bar**: click anywhere to jump there. The right-hand time is time
@@ -44,14 +47,14 @@ blur, the panels fall back to solid dark.
   scripts yet, so the card says "No description yet" for now.
 - **Remembers**: recently played playlists and whether the rail is expanded,
   in `appleview_state.json` (gitignored).
-- **Queue**: right-click a song, Add to queue. AppleView plays queued songs in
+- **Queue**: right-click a song, Add to queue. Hours N Silence plays queued songs in
   order and takes over the moment iTunes would move on (including when
   crossfade starts the next song early). Next with a non-empty queue plays the
   next queued song. Picking a different song in iTunes mid-song stops the
   queue from driving; the songs stay listed.
 - **Dark theme** throughout.
 
-Media keys keep working exactly as before: iTunes handles them and AppleView
+Media keys keep working exactly as before: iTunes handles them and Hours N Silence
 updates to match.
 
 ## Requirements
@@ -71,9 +74,9 @@ pip install -r requirements.txt
 python -m appleview
 ```
 
-If iTunes is closed, AppleView starts it in the background and minimizes its
-window, so AppleView is the only thing you open. iTunes stays running when
-you close AppleView. Closing the window quits AppleView; minimizing goes to
+If iTunes is closed, Hours N Silence starts it in the background and minimizes its
+window, so Hours N Silence is the only thing you open. iTunes stays running when
+you close Hours N Silence. Closing the window quits Hours N Silence; minimizing goes to
 the mini player.
 
 ## Pin it to the taskbar
@@ -84,8 +87,8 @@ Once:
 python tools/make_shortcut.py
 ```
 
-That draws the icon (`assets/appleview.ico`) and puts an AppleView shortcut
-in the Start Menu and on the Desktop. Open AppleView from either, right-click
+That draws the icon (`assets/hours_n_silence.ico`) and puts a Hours N Silence shortcut
+in the Start Menu and on the Desktop. Open Hours N Silence from either, right-click
 its taskbar icon, Pin to taskbar. Safe to run again any time.
 
 ## Day-one test
@@ -99,14 +102,14 @@ and your playlists. Confirms the scripting hook works.
 
 ## Known rough edges
 
-- **Queue is AppleView's, not iTunes'.** iTunes' scripting hook refuses to add
+- **Queue is Hours N Silence's, not iTunes'.** iTunes' scripting hook refuses to add
   songs to playlists on this library (every call style returns "parameter is
   incorrect", most likely because Sync Library is on), so the queue cannot be
-  an iTunes playlist. Consequences: the queue is gone when AppleView closes,
+  an iTunes playlist. Consequences: the queue is gone when Hours N Silence closes,
   and the handoff between queued songs is a cut, not a crossfade.
-- **Quitting iTunes while AppleView runs** shows iTunes' "an application is
-  using iTunes" prompt. Close AppleView first.
-- **The stock Windows volume slider** still appears bottom-center. AppleView's
+- **Quitting iTunes while Hours N Silence runs** shows iTunes' "an application is
+  using iTunes" prompt. Close Hours N Silence first.
+- **The stock Windows volume slider** still appears bottom-center. Hours N Silence's
   card is bottom-right so they do not overlap.
 - Playlists load their songs on first click (about a second for the biggest).
 
@@ -120,7 +123,7 @@ and your playlists. Confirms the scripting hook works.
 - `appleview/state.py` - recents and rail state between runs
 - `appleview/ui/` - main window, rail, playlist page, backdrop, mini player,
   popup, theme, shared widgets, glass (the Windows blur and dark title bar)
-- `assets/appleview.ico` - the icon, drawn by `tools/make_shortcut.py`
+- `assets/hours_n_silence.ico` - the icon, drawn by `tools/make_shortcut.py`
 - `probe.py` - connection test, safe to run any time
 - `tools/make_shortcut.py` - icon plus Start Menu and Desktop shortcuts
 - `tools/queue_test.py` - proves the queue handoff against a running iTunes

@@ -110,7 +110,7 @@ class RailRow(QWidget):
         r = self.rect()
         if self.selected or self._hover:
             p.setPen(Qt.PenStyle.NoPen)
-            p.setBrush(QColor(PANEL_2) if self.selected else QColor(255, 255, 255, 14))
+            p.setBrush(QColor(255, 255, 255, 34) if self.selected else QColor(255, 255, 255, 16))
             p.drawRoundedRect(QRectF(4, 2, r.width() - 8, r.height() - 4), 8, 8)
         x = 12 + (self.indent if self.expanded else 0)
         y = (r.height() - COVER) // 2

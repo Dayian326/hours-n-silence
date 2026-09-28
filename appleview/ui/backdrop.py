@@ -49,7 +49,7 @@ class Backdrop(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         r = self.rect()
-        painter.fillRect(r, QColor(20, 20, 24, 120))   # a bit of the glass shows through
+        painter.fillRect(r, QColor(14, 14, 18, 110))   # a bit of the glass shows through
         if self._pix is not None:
             # overscan a little so the blur's soft edges never show
             scaled = self._pix.scaled(int(r.width() * 1.15), int(r.height() * 1.15),

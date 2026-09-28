@@ -2,7 +2,7 @@
 
 COM objects belong to the thread that created them, so everything iTunes
 lives here. The UI only ever sees plain dicts and lists, and sends commands
-back through a queue. AppleView never writes to the library: the only calls
+back through a queue. Hours N Silence never writes to the library: the only calls
 that change anything are play, pause, next, previous, seek and volume.
 """
 
@@ -32,7 +32,7 @@ HANDOFF_SECONDS = 1
 EARLY_SWITCH_SECONDS = 15
 # Playing a song "from here" means starting its playlist and hopping forward,
 # about 30 ms a hop. Past this many hops we play the song directly and let
-# AppleView's queue carry the rest of the playlist instead.
+# Hours N Silence's queue carry the rest of the playlist instead.
 HOP_LIMIT = 400
 REPEAT_OFF, REPEAT_ONE, REPEAT_ALL = 0, 1, 2
 
@@ -72,7 +72,7 @@ class ITunesWorker(QThread):
         super().__init__(parent)
         self._cmds = queue.Queue()
         self._stop = False
-        self._queue = []          # AppleView's own queue of track dicts
+        self._queue = []          # Hours N Silence's own queue of track dicts
         self._queue_current = None   # db_id of the queued song now playing
         self._last_remaining = None  # seconds left on it at the last poll
         self._last = {}
@@ -118,14 +118,14 @@ class ITunesWorker(QThread):
             return False
 
     def _tuck_itunes_away(self):
-        """iTunes opens its window when we start it; minimize it so AppleView is the face."""
+        """iTunes opens its window when we start it; minimize it so Hours N Silence is the face."""
         try:
             self._it.BrowserWindow.Minimized = True
         except Exception:
             pass
 
     def _loop(self):
-        # AppleView is meant to be the only thing you open: start iTunes if it is closed.
+        # Hours N Silence is meant to be the only thing you open: start iTunes if it is closed.
         connected = self._connect(launch=True)
         if connected:
             self._safe_load_playlists()
@@ -430,7 +430,7 @@ class ITunesWorker(QThread):
             self._queue_current = d["db_id"]
             self._last_remaining = None
             self.queue_changed.emit(list(self._queue))
-            self.status.emit(f"Song {order} of {len(rest) + order}: the rest of the playlist is queued in AppleView")
+            self.status.emit(f"Song {order} of {len(rest) + order}: the rest of the playlist is queued in Hours N Silence")
             return
         self.status.emit(f"Lining up song {order} of {pl.Tracks.Count}")
         volume = it.SoundVolume
@@ -445,7 +445,7 @@ class ITunesWorker(QThread):
             it.SoundVolume = volume
         self.status.emit(f"{pl.Name}: playing from song {order}")
 
-    # ---- AppleView's own queue ----
+    # ---- Hours N Silence's own queue ----
     def _play_next_queued(self):
         if not self._queue:
             self._queue_current = None

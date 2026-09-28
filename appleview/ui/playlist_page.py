@@ -86,7 +86,7 @@ class TrackDelegate(QStyledItemDelegate):
         hover = bool(option.state & QStyle.StateFlag.State_MouseOver)
         if selected or hover:
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QColor(255, 255, 255, 22 if selected else 12))
+            painter.setBrush(QColor(255, 255, 255, 30 if selected else 14))
             painter.drawRoundedRect(r.adjusted(4, 1, -4, -1), 8, 8)
         current = t["db_id"] == self.model.current_db_id
         f = QFont(option.font)

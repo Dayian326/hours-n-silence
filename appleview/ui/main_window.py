@@ -18,7 +18,7 @@ from .widgets import ArtLabel, ClickSlider, IconButton, ModeButton, Transport
 
 REPEAT_OFF, REPEAT_ONE, REPEAT_ALL = 0, 1, 2
 ICON_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-                         "assets", "appleview.ico")
+                         "assets", "hours_n_silence.ico")
 
 
 def make_app_icon():
@@ -48,7 +48,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("AppleView")
+        self.setWindowTitle("Hours N Silence")
         self.setWindowIcon(make_app_icon())
         self.resize(1180, 740)
         self.state = State()
@@ -214,7 +214,7 @@ class MainWindow(QMainWindow):
         self.tray = QSystemTrayIcon(make_app_icon(), self)
         menu = QMenu(self)
         self._tray_menu = menu
-        a_show = QAction("Open AppleView", menu)
+        a_show = QAction("Open Hours N Silence", menu)
         a_show.triggered.connect(self.restore_from_mini)
         a_mini = QAction("Mini player", menu)
         a_mini.triggered.connect(self.showMinimized)
@@ -225,7 +225,7 @@ class MainWindow(QMainWindow):
         menu.addSeparator()
         menu.addAction(a_quit)
         self.tray.setContextMenu(menu)
-        self.tray.setToolTip("AppleView")
+        self.tray.setToolTip("Hours N Silence")
         self.tray.activated.connect(self._tray_activated)
         self.tray.show()
 

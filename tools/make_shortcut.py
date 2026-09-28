@@ -1,13 +1,13 @@
-"""Make AppleView something you can pin to the taskbar.
+"""Make Hours N Silence something you can pin to the taskbar.
 
     python tools/make_shortcut.py
 
-Draws the icon file (assets/appleview.ico), then creates an AppleView shortcut
+Draws the icon file (assets/hours_n_silence.ico), then creates a Hours N Silence shortcut
 in the Start Menu and on the Desktop. The shortcut runs the app without a
 console window and carries the same taskbar identity the app claims for
 itself, which is what lets Windows pin it properly.
 
-After running this once: open AppleView from the Start Menu or Desktop,
+After running this once: open Hours N Silence from the Start Menu or Desktop,
 right-click its taskbar icon, Pin to taskbar. Safe to run again any time.
 """
 
@@ -18,9 +18,9 @@ from PIL import Image, ImageDraw
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS = os.path.join(ROOT, "assets")
-ICON = os.path.join(ASSETS, "appleview.ico")
-APP_ID = "Dayian.AppleView"
-ACCENT = (250, 88, 106, 255)
+ICON = os.path.join(ASSETS, "hours_n_silence.ico")
+APP_ID = "Dayian.HoursNSilence"
+ACCENT = (220, 106, 176, 255)
 DARK = (14, 14, 16, 255)
 
 
@@ -48,7 +48,10 @@ def make_shortcut(folder):
     pythonw = os.path.join(os.path.dirname(sys.executable), "pythonw.exe")
     if not os.path.exists(pythonw):
         pythonw = sys.executable
-    path = os.path.join(folder, "AppleView.lnk")
+    path = os.path.join(folder, "Hours N Silence.lnk")
+    old = os.path.join(folder, "Hours N Silence.lnk")
+    if os.path.exists(old):
+        os.remove(old)
 
     link = pythoncom.CoCreateInstance(shell.CLSID_ShellLink, None, pythoncom.CLSCTX_INPROC_SERVER,
                                       shell.IID_IShellLink)
@@ -56,7 +59,7 @@ def make_shortcut(folder):
     link.SetArguments("-m appleview")
     link.SetWorkingDirectory(ROOT)
     link.SetIconLocation(ICON, 0)
-    link.SetDescription("AppleView music player")
+    link.SetDescription("Hours N Silence music player")
 
     store = link.QueryInterface(propsys.IID_IPropertyStore)
     store.SetValue(pscon.PKEY_AppUserModel_ID, propsys.PROPVARIANTType(APP_ID))
@@ -73,7 +76,7 @@ def main():
     for folder in (start_menu, desktop):
         if os.path.isdir(folder):
             print("shortcut:", make_shortcut(folder))
-    print("Now open AppleView from the Start Menu, right-click its taskbar icon, Pin to taskbar.")
+    print("Now open Hours N Silence from the Start Menu, right-click its taskbar icon, Pin to taskbar.")
     return 0
 
 

@@ -1,4 +1,4 @@
-"""Small things AppleView remembers between runs: recently played playlists,
+"""Small things Hours N Silence remembers between runs: recently played playlists,
 whether the sidebar is expanded. Lives in appleview_state.json next to the
 code, gitignored."""
 
