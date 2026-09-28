@@ -8,3 +8,4 @@ artwork_cache/
 dist/
 build/
 *.spec
+scratch/
