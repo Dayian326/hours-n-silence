@@ -6,7 +6,7 @@ It never takes focus, so typing is not interrupted. It fades out on its own.
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
 from PyQt6.QtWidgets import QApplication, QHBoxLayout, QLabel, QProgressBar, QVBoxLayout, QWidget
 
-from .theme import ACCENT, BORDER
+from .theme import BORDER, accent
 from .widgets import ArtLabel
 
 SHOW_MS = 3000
@@ -50,10 +50,7 @@ class NowPlayingPopup(QWidget):
         self.bar.setRange(0, 100)
         self.bar.setTextVisible(False)
         self.bar.setFixedHeight(4)
-        self.bar.setStyleSheet(
-            f"QProgressBar {{ background: {BORDER}; border: none; border-radius: 2px; }}"
-            f"QProgressBar::chunk {{ background: {ACCENT}; border-radius: 2px; }}"
-        )
+        self.apply_accent()
         col.addWidget(self.title)
         col.addWidget(self.subtitle)
         col.addStretch(1)
@@ -72,6 +69,12 @@ class NowPlayingPopup(QWidget):
 
         self._snap = {}
         self._art_path = ""
+
+    def apply_accent(self):
+        self.bar.setStyleSheet(
+            f"QProgressBar {{ background: {BORDER}; border: none; border-radius: 2px; }}"
+            f"QProgressBar::chunk {{ background: {accent()}; border-radius: 2px; }}"
+        )
 
     # ---- data ----
     def update_snapshot(self, snap):

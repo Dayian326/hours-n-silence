@@ -8,10 +8,11 @@ sys.coinit_flags = 2  # noqa: E402
 from PyQt6.QtWidgets import QApplication  # noqa: E402
 
 from .itunes_worker import ITunesWorker  # noqa: E402
+from .palette import vibrant_color  # noqa: E402
 from .ui.main_window import MainWindow  # noqa: E402
 from .ui.mini_player import MiniPlayer  # noqa: E402
 from .ui.popup import NowPlayingPopup  # noqa: E402
-from .ui.theme import QSS  # noqa: E402
+from .ui.theme import accent, build_qss, set_accent  # noqa: E402
 from .volume import VolumeWatcher  # noqa: E402
 
 
@@ -32,7 +33,7 @@ class App:
         _claim_taskbar_identity()
         self.qt = QApplication(argv)
         self.qt.setStyle("Fusion")
-        self.qt.setStyleSheet(QSS)
+        self.qt.setStyleSheet(build_qss())
         self.qt.setQuitOnLastWindowClosed(False)
         self.qt.setApplicationName("AppleView")
 
@@ -92,6 +93,18 @@ class App:
         self.window.set_art(path)
         self.mini.set_art(path)
         self.popup.set_art(path)
+        self._chameleon(path)
+
+    def _chameleon(self, art_path):
+        """The accent follows the playing song's art."""
+        color = vibrant_color(art_path)
+        if color == accent():
+            return
+        set_accent(color)
+        self.qt.setStyleSheet(build_qss(color))
+        self.window.apply_accent()
+        self.popup.apply_accent()
+        self.mini.apply_accent()
 
     def _on_volume(self, percent):
         self.popup.show_volume(percent)

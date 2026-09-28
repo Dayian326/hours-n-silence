@@ -4,7 +4,7 @@ from PyQt6.QtCore import QRectF, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPixmap
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSlider, QStyle, QWidget
 
-from .theme import ACCENT, BORDER, PANEL_2, TEXT
+from .theme import BORDER, PANEL_2, TEXT, accent
 
 
 class ArtLabel(QLabel):
@@ -140,4 +140,4 @@ class Transport(QWidget):
         self.next_btn.clicked.connect(self.next)
 
     def set_playing(self, playing):
-        self.play_btn.set_icon("SP_MediaPause" if playing else "SP_MediaPlay", ACCENT if playing else TEXT)
+        self.play_btn.set_icon("SP_MediaPause" if playing else "SP_MediaPlay", accent() if playing else TEXT)

@@ -1,22 +1,22 @@
-"""The full window: playlists on the left, songs on the right, player bar
-below, and a queue panel that slides in on the right."""
+"""The full window, v2: playlist rail on the left, the immersive playlist page
+in the middle, the queue panel on the right, the player bar below."""
 
 import os
 
 from PyQt6.QtCore import QEvent, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QAction, QColor, QIcon, QPainter, QPixmap
 from PyQt6.QtWidgets import (
-    QAbstractItemView, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget, QListWidgetItem,
-    QMainWindow, QMenu, QPushButton, QSplitter, QSystemTrayIcon, QTableWidget,
-    QTableWidgetItem, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
+    QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QMainWindow, QMenu, QPushButton,
+    QSystemTrayIcon, QVBoxLayout, QWidget,
 )
 
-from .theme import ACCENT, MUTED, fmt_time
+from ..state import State
+from .playlist_page import PlaylistPage
+from .rail import PlaylistRail
+from .theme import ACCENT, fmt_time
 from .widgets import ArtLabel, ClickSlider, IconButton, ModeButton, Transport
 
 REPEAT_OFF, REPEAT_ONE, REPEAT_ALL = 0, 1, 2
-
-
 ICON_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                          "assets", "appleview.ico")
 
@@ -41,23 +41,24 @@ def make_app_icon():
 
 
 class MainWindow(QMainWindow):
-    # commands out to the worker
     command = pyqtSignal(str, object)      # (name, arg or None)
     minimized_to_mini = pyqtSignal()
-    restored = pyqtSignal()                # full window is back; mini player should go
+    restored = pyqtSignal()
     quit_requested = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("AppleView")
         self.setWindowIcon(make_app_icon())
-        self.resize(1080, 680)
+        self.resize(1180, 740)
+        self.state = State()
         self._playlists = []
-        self._tracks = []           # tracks of the selected playlist
-        self._rows = []             # indexes into _tracks after filtering
+        self._by_id = {}
         self._selected_playlist = None
         self._snap = {}
+        self._art_path = ""
         self._seeking = False
+        self._show_remaining = True
         self._build()
 
     # ---- layout ----
@@ -69,76 +70,29 @@ class MainWindow(QMainWindow):
         v.setContentsMargins(12, 12, 12, 10)
         v.setSpacing(10)
 
-        split = QSplitter(Qt.Orientation.Horizontal)
-        v.addWidget(split, 1)
+        middle = QHBoxLayout()
+        middle.setSpacing(10)
+        v.addLayout(middle, 1)
 
-        # left: playlists
-        left = QWidget()
-        left.setObjectName("panel")
-        lv = QVBoxLayout(left)
-        lv.setContentsMargins(8, 10, 8, 8)
-        head = QLabel("PLAYLISTS")
-        head.setObjectName("heading")
-        lv.addWidget(head)
-        self.tree = QTreeWidget()
-        self.tree.setHeaderHidden(True)
-        self.tree.setIndentation(14)
-        self.tree.itemClicked.connect(self._on_playlist_clicked)
-        self.tree.itemDoubleClicked.connect(self._on_playlist_double)
-        lv.addWidget(self.tree, 1)
-        split.addWidget(left)
+        self.rail = PlaylistRail()
+        self.rail.playlist_clicked.connect(self._on_playlist_clicked)
+        self.rail.playlist_double_clicked.connect(self._on_playlist_double)
+        self.rail.expanded_changed.connect(self._on_rail_expanded)
+        middle.addWidget(self.rail)
 
-        # middle: search + tracks
-        mid = QWidget()
-        mid.setObjectName("panel")
-        mv = QVBoxLayout(mid)
-        mv.setContentsMargins(10, 10, 10, 8)
-        top = QHBoxLayout()
-        self.playlist_title = QLabel("Music")
-        self.playlist_title.setObjectName("title")
-        self.search = QLineEdit()
-        self.search.setPlaceholderText("Search this playlist")
-        self.search.setClearButtonEnabled(True)
-        self.search.textChanged.connect(self._refill_table)
-        self.play_all_btn = QPushButton("Play playlist")
-        self.play_all_btn.setObjectName("primary")
-        self.play_all_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.play_all_btn.clicked.connect(self._play_selected_playlist)
-        self.queue_btn = QPushButton("Queue")
-        self.queue_btn.setObjectName("flat")
-        self.queue_btn.setCheckable(True)
-        self.queue_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.queue_btn.toggled.connect(self._toggle_queue)
-        top.addWidget(self.playlist_title)
-        top.addSpacing(12)
-        top.addWidget(self.search, 1)
-        top.addWidget(self.play_all_btn)
-        top.addWidget(self.queue_btn)
-        mv.addLayout(top)
+        self.page = PlaylistPage()
+        self.page.setObjectName("panel")
+        self.page.play_playlist.connect(self._play_selected_playlist)
+        self.page.shuffle_playlist.connect(self._shuffle_selected_playlist)
+        self.page.queue_all.connect(self._queue_all)
+        self.page.play_track.connect(lambda t: self.command.emit("play_track", t))
+        self.page.enqueue_track.connect(self._enqueue)
+        middle.addWidget(self.page, 1)
 
-        self.table = QTableWidget(0, 4)
-        self.table.setHorizontalHeaderLabels(["Title", "Artist", "Album", "Time"])
-        self.table.verticalHeader().setVisible(False)
-        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
-        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.table.setShowGrid(False)
-        self.table.setAlternatingRowColors(False)
-        hh = self.table.horizontalHeader()
-        hh.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        hh.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        hh.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        hh.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
-        self.table.setColumnWidth(3, 64)
-        self.table.cellDoubleClicked.connect(self._on_track_double)
-        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.table.customContextMenuRequested.connect(self._track_menu)
-        mv.addWidget(self.table, 1)
-        split.addWidget(mid)
-
-        # right: queue
-        self.queue_panel = QWidget()
+        # queue panel
+        self.queue_panel = QFrame()
         self.queue_panel.setObjectName("panel")
+        self.queue_panel.setFixedWidth(240)
         qv = QVBoxLayout(self.queue_panel)
         qv.setContentsMargins(8, 10, 8, 8)
         qh = QHBoxLayout()
@@ -162,14 +116,11 @@ class MainWindow(QMainWindow):
         self.queue_hint.setObjectName("status")
         self.queue_hint.setWordWrap(True)
         qv.addWidget(self.queue_hint)
-        split.addWidget(self.queue_panel)
+        middle.addWidget(self.queue_panel)
         self.queue_panel.hide()
 
-        split.setSizes([230, 620, 230])
-        split.setStretchFactor(1, 1)
-
-        # bottom: player bar
-        bar = QWidget()
+        # player bar
+        bar = QFrame()
         bar.setObjectName("panel")
         bh = QHBoxLayout(bar)
         bh.setContentsMargins(12, 10, 12, 10)
@@ -186,7 +137,7 @@ class MainWindow(QMainWindow):
         info.addWidget(self.now_sub)
         info_w = QWidget()
         info_w.setLayout(info)
-        info_w.setFixedWidth(260)
+        info_w.setFixedWidth(250)
         bh.addWidget(info_w)
 
         center = QVBoxLayout()
@@ -214,7 +165,6 @@ class MainWindow(QMainWindow):
         self.seek.setRange(0, 0)
         self.seek.sliderPressed.connect(self._seek_pressed)
         self.seek.sliderReleased.connect(self._seek_released)
-        self._show_remaining = True
         self.dur_label = QPushButton("-0:00")
         self.dur_label.setObjectName("time")
         self.dur_label.setToolTip("Time left. Click to show the song length instead.")
@@ -227,23 +177,28 @@ class MainWindow(QMainWindow):
         center.addLayout(seek_row)
         bh.addLayout(center, 1)
 
-        vol_row = QHBoxLayout()
-        vol_row.setSpacing(6)
+        right = QHBoxLayout()
+        right.setSpacing(6)
         self.vol_icon = IconButton("SP_MediaVolume", 26, 16, tip="iTunes volume")
         self.vol = ClickSlider(Qt.Orientation.Horizontal)
         self.vol.setRange(0, 100)
         self.vol.setFixedWidth(110)
         self.vol.valueChanged.connect(self._on_vol_changed)
-        vol_row.addWidget(self.vol_icon)
-        vol_row.addWidget(self.vol)
-        bh.addLayout(vol_row)
-
+        self.queue_btn = QPushButton("Queue")
+        self.queue_btn.setObjectName("flat")
+        self.queue_btn.setCheckable(True)
+        self.queue_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.queue_btn.toggled.connect(self.queue_panel.setVisible)
         self.mini_btn = IconButton("SP_TitleBarMinButton", 28, 14, tip="Mini player")
         self.mini_btn.clicked.connect(self.showMinimized)
-        bh.addWidget(self.mini_btn)
+        right.addWidget(self.vol_icon)
+        right.addWidget(self.vol)
+        right.addSpacing(8)
+        right.addWidget(self.queue_btn)
+        right.addWidget(self.mini_btn)
+        bh.addLayout(right)
         v.addWidget(bar)
 
-        # status line
         srow = QHBoxLayout()
         self.status = QLabel("Starting")
         self.status.setObjectName("status")
@@ -274,132 +229,66 @@ class MainWindow(QMainWindow):
         self.tray.activated.connect(self._tray_activated)
         self.tray.show()
 
+        self.rail.set_expanded(self.state.rail_expanded)
+
     # ---- playlists ----
     def set_playlists(self, playlists):
         self._playlists = playlists
-        self.tree.clear()
-        by_id = {}
-        music_item = None
-        for p in playlists:
-            it = QTreeWidgetItem([p["name"] if p["folder"] else f'{p["name"]}   ({p["count"]})'])
-            it.setData(0, Qt.ItemDataRole.UserRole, p["db_id"])
-            if p["folder"]:
-                it.setForeground(0, QColor(MUTED))
-            by_id[p["db_id"]] = it
-            if p["music"]:
-                music_item = it
-        for p in playlists:
-            it = by_id[p["db_id"]]
-            parent = by_id.get(p["parent"]) if p["parent"] else None
-            if parent is not None:
-                parent.addChild(it)
-            else:
-                self.tree.addTopLevelItem(it)
-        self.tree.expandAll()
-        # keep the playlist that was open (this also runs after iTunes reconnects)
-        current = by_id.get(self._selected_playlist) if self._selected_playlist is not None else None
+        self._by_id = {p["db_id"]: p for p in playlists}
+        self.rail.set_playlists(playlists, self.state.recent)
+        current = self._by_id.get(self._selected_playlist) if self._selected_playlist is not None else None
+        if current is None:
+            current = next((p for p in playlists if p.get("music")), None)
         if current is not None:
-            self.tree.setCurrentItem(current)
-            self.command.emit("load_tracks", self._selected_playlist)
-        elif music_item is not None:
-            self.tree.setCurrentItem(music_item)
-            self._on_playlist_clicked(music_item, 0)
+            self._open_playlist(current)
 
-    def _playlist_of(self, item):
-        pid = item.data(0, Qt.ItemDataRole.UserRole)
-        for p in self._playlists:
-            if p["db_id"] == pid:
-                return p
-        return None
-
-    def _on_playlist_clicked(self, item, _col):
-        p = self._playlist_of(item)
-        if p is None or p["folder"]:
-            return
+    def _open_playlist(self, p):
         self._selected_playlist = p["db_id"]
-        self.playlist_title.setText(p["name"])
-        self.search.clear()
+        self.rail.set_selected(p["db_id"])
+        self.page.set_playlist(p, self._art_path)
         self.command.emit("load_tracks", p["db_id"])
 
-    def _on_playlist_double(self, item, _col):
-        p = self._playlist_of(item)
-        if p is not None and not p["folder"]:
+    def _on_playlist_clicked(self, p):
+        if p is None or p.get("folder"):
+            return
+        self._open_playlist(p)
+
+    def _on_playlist_double(self, p):
+        if p is not None and not p.get("folder"):
             self.command.emit("play_playlist", p["db_id"])
 
     def _play_selected_playlist(self):
         if self._selected_playlist is not None:
             self.command.emit("play_playlist", self._selected_playlist)
 
+    def _shuffle_selected_playlist(self):
+        if self._selected_playlist is not None:
+            self.command.emit("shuffle_playlist", self._selected_playlist)
+
+    def _queue_all(self):
+        for t in self.page.model.tracks:
+            self.command.emit("enqueue", t)
+        if self.page.model.tracks and not self.queue_btn.isChecked():
+            self.queue_btn.setChecked(True)
+
+    def _on_rail_expanded(self, on):
+        if self.state.rail_expanded != on:
+            self.state.rail_expanded = on
+            self.state.save()
+
     # ---- tracks ----
     def set_tracks(self, playlist_id, tracks):
         if playlist_id != self._selected_playlist:
             return
-        self._tracks = tracks
-        self._refill_table()
+        self.page.set_tracks(tracks)
+        self.page.set_current(self._snap.get("db_id"))
 
-    def _refill_table(self):
-        q = self.search.text().strip().lower()
-        self._rows = [
-            i for i, t in enumerate(self._tracks)
-            if not q or q in (t["name"] or "").lower() or q in (t["artist"] or "").lower()
-            or q in (t["album"] or "").lower()
-        ]
-        self.table.setUpdatesEnabled(False)
-        self.table.setRowCount(len(self._rows))
-        for r, i in enumerate(self._rows):
-            t = self._tracks[i]
-            cells = (t["name"], t["artist"], t["album"], fmt_time(t["duration"]))
-            for c, text in enumerate(cells):
-                item = QTableWidgetItem(text or "")
-                if c == 3:
-                    item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-                    item.setForeground(QColor(MUTED))
-                self.table.setItem(r, c, item)
-        self.table.setUpdatesEnabled(True)
-        self._highlight_current()
-
-    def _track_at_row(self, row):
-        if 0 <= row < len(self._rows):
-            return self._tracks[self._rows[row]]
-        return None
-
-    def _on_track_double(self, row, _col):
-        t = self._track_at_row(row)
-        if t is not None:
-            self.command.emit("play_track", t)
-
-    def _track_menu(self, pos):
-        row = self.table.rowAt(pos.y())
-        t = self._track_at_row(row)
-        if t is None:
-            return
-        menu = QMenu(self)
-        a_play = menu.addAction("Play")
-        a_queue = menu.addAction("Add to queue")
-        chosen = menu.exec(self.table.viewport().mapToGlobal(pos))
-        if chosen == a_play:
-            self.command.emit("play_track", t)
-        elif chosen == a_queue:
-            self.command.emit("enqueue", t)
-            if not self.queue_btn.isChecked():
-                self.queue_btn.setChecked(True)
-
-    def _highlight_current(self):
-        cur = self._snap.get("db_id")
-        for r, i in enumerate(self._rows):
-            color = QColor(ACCENT) if self._tracks[i]["db_id"] == cur else None
-            for c in range(3):
-                item = self.table.item(r, c)
-                if item is not None:
-                    if color is not None:
-                        item.setForeground(color)
-                    else:
-                        item.setData(Qt.ItemDataRole.ForegroundRole, None)
+    def _enqueue(self, t):
+        self.command.emit("enqueue", t)
+        if not self.queue_btn.isChecked():
+            self.queue_btn.setChecked(True)
 
     # ---- queue ----
-    def _toggle_queue(self, on):
-        self.queue_panel.setVisible(on)
-
     def set_queue(self, tracks):
         self.queue_list.clear()
         for t in tracks:
@@ -411,7 +300,7 @@ class MainWindow(QMainWindow):
 
     # ---- now playing ----
     def update_snapshot(self, snap):
-        prev_id = self._snap.get("db_id")
+        prev = self._snap
         self._snap = snap
         if not snap.get("connected", True):
             self.now_title.setText("iTunes is not running")
@@ -443,15 +332,32 @@ class MainWindow(QMainWindow):
             self.vol.blockSignals(True)
             self.vol.setValue(int(vol))
             self.vol.blockSignals(False)
-        if snap.get("db_id") != prev_id:
-            self._highlight_current()
+        if snap.get("db_id") != prev.get("db_id"):
+            self.page.set_current(snap.get("db_id"))
+        pl_id = snap.get("playlist_id")
+        if pl_id != prev.get("playlist_id"):
+            self.rail.set_playing(pl_id)
+            p = self._by_id.get(pl_id)
+            if p is not None and not p.get("music") and not p.get("folder") and p.get("pid"):
+                if self.state.touch_recent(p["pid"]):
+                    self.rail.set_recent(self.state.recent)
 
     def set_art(self, path):
+        self._art_path = path
         self.art.set_art(path)
+        self.page.set_fallback_art(path)
+
+    def apply_accent(self):
+        """The accent changed (chameleon): repaint what draws it by hand."""
+        self.transport.set_playing(bool(self._snap.get("playing")))
+        self.shuffle_btn.set_active(bool(self._snap.get("shuffle")))
+        self.repeat_btn.set_active(int(self._snap.get("repeat") or 0) != REPEAT_OFF)
+        self.page.view.viewport().update()
+        for r in self.rail._rows:
+            r.update()
 
     @staticmethod
     def _elide(label, text):
-        """Long titles get a trailing ellipsis instead of running off the edge."""
         width = max(label.width() - 4, 120)
         return label.fontMetrics().elidedText(text, Qt.TextElideMode.ElideRight, width)
 
@@ -513,6 +419,5 @@ class MainWindow(QMainWindow):
                 self.restore_from_mini()
 
     def closeEvent(self, e):
-        # closing the window quits the app; the tray is for minimizing
         self.quit_requested.emit()
         e.accept()

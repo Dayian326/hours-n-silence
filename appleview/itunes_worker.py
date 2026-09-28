@@ -44,6 +44,7 @@ PLAIN = {
     "previous": "go back a song",
     "play_track": "play that song",
     "play_playlist": "play that playlist",
+    "shuffle_playlist": "shuffle that playlist",
     "play_queue": "play the queue",
     "seek": "jump to that spot",
     "volume": "change the volume",
@@ -261,14 +262,16 @@ class ITunesWorker(QThread):
             parent = up.Parent
             if special == SPECIAL_NONE and self._is_video_playlist(p):
                 continue
-            cover = ""
+            cover, pid = "", ""
             try:
-                cover = cover_for(persistent_hex(*it.GetITObjectPersistentIDs(p)))
+                pid = persistent_hex(*it.GetITObjectPersistentIDs(p))
+                cover = cover_for(pid)
             except Exception:
                 pass
             out.append({
                 "name": p.Name,
                 "db_id": p.playlistID,
+                "pid": pid,          # survives restarts; playlistID may not
                 "folder": special == SPECIAL_FOLDER,
                 "music": special == SPECIAL_MUSIC,
                 "parent": parent.playlistID if parent is not None else None,
@@ -379,7 +382,14 @@ class ITunesWorker(QThread):
                     cp.SongRepeat = int(args[0])
             elif name == "play_playlist":
                 self._queue_current = None
-                CastTo(self._playlist_by_id(args[0]), "IITUserPlaylist").PlayFirstTrack()
+                pl = self._playlist_by_id(args[0])
+                pl.Shuffle = False
+                pl.PlayFirstTrack()
+            elif name == "shuffle_playlist":
+                self._queue_current = None
+                pl = self._playlist_by_id(args[0])
+                pl.Shuffle = True
+                pl.PlayFirstTrack()
             elif name == "play_queue":
                 self._play_next_queued()
             elif name == "seek":

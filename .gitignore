@@ -11,3 +11,4 @@ build/
 scratch/
 probe_artwork.*
 appleview.log
+appleview_state.json

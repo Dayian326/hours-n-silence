@@ -66,6 +66,9 @@ class MiniPlayer(QWidget):
     def set_art(self, path):
         self.art.set_art(path)
 
+    def apply_accent(self):
+        self.transport.set_playing(self.transport.play_btn._icon_name == "SP_MediaPause")
+
     def place_default(self):
         screen = QApplication.primaryScreen().availableGeometry()
         self.move(screen.right() - self.width() - 18, screen.top() + 18)

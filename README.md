@@ -9,6 +9,13 @@ writes to the library.
 
 ## What it does
 
+v2 look: a playlist rail on the left (covers only, or covers with names
+when you expand it with the button at the top; hover a cover while it is
+collapsed to see the name), recently played playlists pinned at the top of
+the rail, and an immersive playlist page: the cover blurred across the whole
+page, a card with the cover, name, description and Play / Shuffle, the songs
+on the right. The accent color follows the art of whatever is playing.
+
 - **Popup card** in the bottom-right corner whenever the system volume changes
   (knob, mouse, taskbar slider all count): album art, song, artist, volume bar.
   Never takes focus, fades after three seconds. Also shows when a new song
@@ -28,7 +35,11 @@ writes to the library.
   left; click it to see the song length instead.
 - **Playlist covers**: the art you dragged onto playlists in iTunes is read
   from iTunes' artwork cache (never written) and kept as PNGs in
-  `artwork_cache/`. How they are shown is being decided.
+  `artwork_cache/`. Playlists without a cover borrow the playing song's art.
+- **Descriptions**: shown when available. iTunes does not expose them to
+  scripts yet, so the card says "No description yet" for now.
+- **Remembers**: recently played playlists and whether the rail is expanded,
+  in `appleview_state.json` (gitignored).
 - **Queue**: right-click a song, Add to queue. AppleView plays queued songs in
   order and takes over the moment iTunes would move on (including when
   crossfade starts the next song early). Next with a non-empty queue plays the
@@ -100,7 +111,11 @@ and your playlists. Confirms the scripting hook works.
 - `appleview/itunes_worker.py` - the one thread that talks to iTunes
 - `appleview/volume.py` - watches the Windows master volume
 - `appleview/cache.py` - artwork cache (`artwork_cache/`, gitignored)
-- `appleview/ui/` - main window, mini player, popup, theme, shared widgets
+- `appleview/covers.py` - playlist covers out of iTunes' artwork cache
+- `appleview/palette.py` - the chameleon: one accent color from a piece of art
+- `appleview/state.py` - recents and rail state between runs
+- `appleview/ui/` - main window, rail, playlist page, backdrop, mini player,
+  popup, theme, shared widgets
 - `assets/appleview.ico` - the icon, drawn by `tools/make_shortcut.py`
 - `probe.py` - connection test, safe to run any time
 - `tools/make_shortcut.py` - icon plus Start Menu and Desktop shortcuts
