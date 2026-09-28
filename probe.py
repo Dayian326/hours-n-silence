@@ -10,6 +10,10 @@ import sys
 
 import win32com.client
 
+# Playlist and track names can contain characters the Windows console can't
+# print by default. Force UTF-8 so a name never crashes the probe.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 
 def main():
     try:
