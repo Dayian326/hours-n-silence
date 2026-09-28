@@ -174,12 +174,15 @@ class HomePage(QWidget):
                 continue
             shown_ids.update(p["db_id"] for p in kids)
             self._add_heading(folder["name"], f"{len(kids)} parts, played in order")
-            row = QHBoxLayout()
-            row.setSpacing(12)
-            for p in kids:
-                row.addWidget(self._card(p, 118, SHELF_W, SHELF_H))
-            row.addStretch(1)
-            self.sections.addLayout(row)
+            # a wrapping shelf: as many per row as fit, never wider than the page
+            shelf = QGridLayout()
+            shelf.setHorizontalSpacing(12)
+            shelf.setVerticalSpacing(12)
+            per_row = max(3, (self.width() - 60) // (SHELF_W + 12)) if self.width() > 0 else 8
+            for i, p in enumerate(kids):
+                shelf.addWidget(self._card(p, 118, SHELF_W, SHELF_H), i // per_row, i % per_row)
+            shelf.setColumnStretch(per_row, 1)
+            self.sections.addLayout(shelf)
         rest = [p for p in real if p["db_id"] not in shown_ids and (not q or q in p["name"].lower())]
         self._add_heading("All playlists", "")
         grid = QGridLayout()
