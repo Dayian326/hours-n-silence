@@ -5,6 +5,7 @@ import sys
 # Qt and the audio library must agree on how COM is set up on the main thread.
 sys.coinit_flags = 2  # noqa: E402
 
+from PyQt6.QtNetwork import QLocalServer, QLocalSocket  # noqa: E402
 from PyQt6.QtWidgets import QApplication  # noqa: E402
 
 from .audio import LoopbackMeter  # noqa: E402
@@ -19,6 +20,20 @@ from .volume import VolumeWatcher  # noqa: E402
 
 
 APP_ID = "Dayian.HoursNSilence"   # taskbar identity; the shortcut carries the same id
+SINGLE_INSTANCE_NAME = "HoursNSilence-single-instance"
+
+
+def _already_running():
+    """If a copy is running, tell it to come back to the front and report True."""
+    sock = QLocalSocket()
+    sock.connectToServer(SINGLE_INSTANCE_NAME)
+    if sock.waitForConnected(300):
+        sock.write(b"show")
+        sock.flush()
+        sock.waitForBytesWritten(300)
+        sock.disconnectFromServer()
+        return True
+    return False
 
 
 def _claim_taskbar_identity():
@@ -31,9 +46,9 @@ def _claim_taskbar_identity():
 
 
 class App:
-    def __init__(self, argv):
+    def __init__(self, argv, qt=None):
         _claim_taskbar_identity()
-        self.qt = QApplication(argv)
+        self.qt = qt or QApplication(argv)
         self.qt.setStyle("Fusion")
         self.qt.setStyleSheet(build_qss())
         self.qt.setQuitOnLastWindowClosed(False)
@@ -75,6 +90,12 @@ class App:
 
         # the knob
         self.volume.changed.connect(self._on_volume)
+
+        # a second launch (taskbar click while the mini player is up) just brings us back
+        QLocalServer.removeServer(SINGLE_INSTANCE_NAME)
+        self._server = QLocalServer()
+        self._server.newConnection.connect(self._on_second_launch)
+        self._server.listen(SINGLE_INSTANCE_NAME)
 
         # the listener follows the mini player
         self.mini.shown.connect(self._start_meter)
@@ -169,6 +190,12 @@ class App:
             self._mini_placed = True
         self.mini.show()
 
+    def _on_second_launch(self):
+        while self._server.hasPendingConnections():
+            conn = self._server.nextPendingConnection()
+            conn.disconnectFromServer()
+        self._show_full()
+
     def _show_full(self):
         self.window.restore_from_mini()   # emits restored, which hides the mini player
 
@@ -222,7 +249,10 @@ def _install_error_log():
 
 def main():
     _install_error_log()
-    sys.exit(App(sys.argv).run())
+    qt = QApplication(sys.argv)        # a socket needs an application object
+    if _already_running():
+        sys.exit(0)
+    sys.exit(App(sys.argv, qt).run())
 
 
 if __name__ == "__main__":
