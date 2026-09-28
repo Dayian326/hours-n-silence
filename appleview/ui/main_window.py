@@ -7,12 +7,14 @@ from PyQt6.QtCore import QEvent, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QAction, QColor, QIcon, QPainter, QPixmap
 from PyQt6.QtWidgets import (
     QAbstractItemView, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget, QListWidgetItem,
-    QMainWindow, QMenu, QPushButton, QSlider, QSplitter, QSystemTrayIcon, QTableWidget,
+    QMainWindow, QMenu, QPushButton, QSplitter, QSystemTrayIcon, QTableWidget,
     QTableWidgetItem, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
 from .theme import ACCENT, MUTED, fmt_time
-from .widgets import ArtLabel, IconButton, Transport
+from .widgets import ArtLabel, ClickSlider, IconButton, ModeButton, Transport
+
+REPEAT_OFF, REPEAT_ONE, REPEAT_ALL = 0, 1, 2
 
 
 ICON_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
@@ -189,20 +191,36 @@ class MainWindow(QMainWindow):
 
         center = QVBoxLayout()
         center.setSpacing(4)
+        controls = QHBoxLayout()
+        controls.setSpacing(10)
+        self.shuffle_btn = ModeButton("⇄", tip="Shuffle the current playlist")
+        self.shuffle_btn.clicked.connect(self._toggle_shuffle)
         self.transport = Transport(32)
         self.transport.previous.connect(lambda: self.command.emit("previous", None))
         self.transport.play_pause.connect(lambda: self.command.emit("play_pause", None))
         self.transport.next.connect(lambda: self.command.emit("next", None))
-        center.addWidget(self.transport, 0, Qt.AlignmentFlag.AlignHCenter)
+        self.repeat_btn = ModeButton("⟳", tip="Repeat: off, all, one")
+        self.repeat_btn.clicked.connect(self._cycle_repeat)
+        controls.addStretch(1)
+        controls.addWidget(self.shuffle_btn)
+        controls.addWidget(self.transport)
+        controls.addWidget(self.repeat_btn)
+        controls.addStretch(1)
+        center.addLayout(controls)
         seek_row = QHBoxLayout()
         self.pos_label = QLabel("0:00")
         self.pos_label.setObjectName("status")
-        self.seek = QSlider(Qt.Orientation.Horizontal)
+        self.seek = ClickSlider(Qt.Orientation.Horizontal)
         self.seek.setRange(0, 0)
         self.seek.sliderPressed.connect(self._seek_pressed)
         self.seek.sliderReleased.connect(self._seek_released)
-        self.dur_label = QLabel("0:00")
-        self.dur_label.setObjectName("status")
+        self._show_remaining = True
+        self.dur_label = QPushButton("-0:00")
+        self.dur_label.setObjectName("time")
+        self.dur_label.setToolTip("Time left. Click to show the song length instead.")
+        self.dur_label.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.dur_label.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.dur_label.clicked.connect(self._toggle_time_mode)
         seek_row.addWidget(self.pos_label)
         seek_row.addWidget(self.seek, 1)
         seek_row.addWidget(self.dur_label)
@@ -212,7 +230,7 @@ class MainWindow(QMainWindow):
         vol_row = QHBoxLayout()
         vol_row.setSpacing(6)
         self.vol_icon = IconButton("SP_MediaVolume", 26, 16, tip="iTunes volume")
-        self.vol = QSlider(Qt.Orientation.Horizontal)
+        self.vol = ClickSlider(Qt.Orientation.Horizontal)
         self.vol.setRange(0, 100)
         self.vol.setFixedWidth(110)
         self.vol.valueChanged.connect(self._on_vol_changed)
@@ -415,7 +433,11 @@ class MainWindow(QMainWindow):
             self.seek.setRange(0, dur)
             self.seek.setValue(pos)
             self.pos_label.setText(fmt_time(pos))
-        self.dur_label.setText(fmt_time(dur))
+            self._update_time_label(pos, dur)
+        self.shuffle_btn.set_active(bool(snap.get("shuffle")))
+        repeat = int(snap.get("repeat") or REPEAT_OFF)
+        self.repeat_btn.setText("⟳" if repeat != REPEAT_ONE else "⟳¹")
+        self.repeat_btn.set_active(repeat != REPEAT_OFF)
         vol = snap.get("volume")
         if vol is not None and not self.vol.isSliderDown():
             self.vol.blockSignals(True)
@@ -442,6 +464,26 @@ class MainWindow(QMainWindow):
     def _seek_released(self):
         self._seeking = False
         self.command.emit("seek", self.seek.value())
+
+    def _update_time_label(self, pos, dur):
+        if self._show_remaining:
+            self.dur_label.setText("-" + fmt_time(max(dur - pos, 0)))
+        else:
+            self.dur_label.setText(fmt_time(dur))
+
+    def _toggle_time_mode(self):
+        self._show_remaining = not self._show_remaining
+        self.dur_label.setToolTip("Time left. Click to show the song length instead." if self._show_remaining
+                                  else "Song length. Click to show the time left instead.")
+        self._update_time_label(int(self._snap.get("position") or 0), int(self._snap.get("duration") or 0))
+
+    def _toggle_shuffle(self):
+        self.command.emit("set_shuffle", not bool(self._snap.get("shuffle")))
+
+    def _cycle_repeat(self):
+        current = int(self._snap.get("repeat") or REPEAT_OFF)
+        nxt = {REPEAT_OFF: REPEAT_ALL, REPEAT_ALL: REPEAT_ONE, REPEAT_ONE: REPEAT_OFF}[current]
+        self.command.emit("set_repeat", nxt)
 
     def _on_vol_changed(self, value):
         self.command.emit("volume", value)

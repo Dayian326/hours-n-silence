@@ -16,6 +16,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 from win32com.client import CastTo, gencache
 
 from .cache import artwork_path_for, save_artwork
+from .covers import cover_for, persistent_hex
 
 PLAYLIST_KIND_USER = 2
 SPECIAL_NONE = 0          # a normal playlist
@@ -29,6 +30,11 @@ HANDOFF_SECONDS = 1
 # iTunes' crossfade can be set up to 12 seconds; a track change with less than
 # this left on the queued song counts as "it ended", not "the user changed it".
 EARLY_SWITCH_SECONDS = 15
+# Playing a song "from here" means starting its playlist and hopping forward,
+# about 30 ms a hop. Past this many hops we play the song directly and let
+# AppleView's queue carry the rest of the playlist instead.
+HOP_LIMIT = 400
+REPEAT_OFF, REPEAT_ONE, REPEAT_ALL = 0, 1, 2
 
 
 # command names as a person would say them, for status messages
@@ -162,7 +168,18 @@ class ITunesWorker(QThread):
             "connected": True,
             "playing": state == 1,
             "volume": it.SoundVolume,
+            "shuffle": False,
+            "repeat": REPEAT_OFF,
+            "playlist_id": None,
         }
+        try:
+            cp = it.CurrentPlaylist
+            if cp is not None:
+                snap["shuffle"] = bool(cp.Shuffle)
+                snap["repeat"] = int(cp.SongRepeat)
+                snap["playlist_id"] = cp.playlistID
+        except Exception:
+            pass
         if t is not None:
             pos = it.PlayerPosition
             snap.update({
@@ -208,8 +225,9 @@ class ITunesWorker(QThread):
                 path = ""
         self.artwork.emit(db_id, path)
 
-    def _track_dict(self, t):
+    def _track_dict(self, t, order=None):
         d = {
+            "order": order,          # 1-based position in the playlist's play order
             "db_id": t.TrackDatabaseID,
             "source_id": t.sourceID,
             "playlist_id": t.playlistID,
@@ -243,6 +261,11 @@ class ITunesWorker(QThread):
             parent = up.Parent
             if special == SPECIAL_NONE and self._is_video_playlist(p):
                 continue
+            cover = ""
+            try:
+                cover = cover_for(persistent_hex(*it.GetITObjectPersistentIDs(p)))
+            except Exception:
+                pass
             out.append({
                 "name": p.Name,
                 "db_id": p.playlistID,
@@ -250,6 +273,7 @@ class ITunesWorker(QThread):
                 "music": special == SPECIAL_MUSIC,
                 "parent": parent.playlistID if parent is not None else None,
                 "count": p.Tracks.Count if special != SPECIAL_FOLDER else 0,
+                "cover": cover,
             })
         self.playlists.emit(out)
         self.status.emit(f"{len(out)} playlists loaded")
@@ -286,8 +310,9 @@ class ITunesWorker(QThread):
         tracks = p.Tracks
         n = tracks.Count
         out = []
+        # play order is the order iTunes itself will play them in
         for i in range(1, n + 1):
-            out.append(self._track_dict(tracks.Item(i)))
+            out.append(self._track_dict(tracks.ItemByPlayOrder(i), order=i))
             if i % 200 == 0:
                 self.status.emit(f"Loading {p.Name}: {i}/{n}")
         self._track_cache[playlist_id] = out
@@ -339,7 +364,19 @@ class ITunesWorker(QThread):
                 it.BackTrack()
             elif name == "play_track":
                 self._queue_current = None
-                self._play_track(args[0])
+                self._play_from_here(args[0])
+            elif name == "set_shuffle":
+                cp = it.CurrentPlaylist
+                if cp is None:
+                    self.status.emit("Start a playlist first, then shuffle it")
+                else:
+                    cp.Shuffle = bool(args[0])
+            elif name == "set_repeat":
+                cp = it.CurrentPlaylist
+                if cp is None:
+                    self.status.emit("Start a playlist first, then set repeat")
+                else:
+                    cp.SongRepeat = int(args[0])
             elif name == "play_playlist":
                 self._queue_current = None
                 CastTo(self._playlist_by_id(args[0]), "IITUserPlaylist").PlayFirstTrack()
@@ -351,6 +388,52 @@ class ITunesWorker(QThread):
                 it.SoundVolume = int(args[0])
         except Exception as e:
             self.status.emit(f"iTunes would not {PLAIN.get(name, name)}: {str(e)[:80]}")
+
+    def _play_from_here(self, d):
+        """Play a song and have iTunes continue with the songs after it.
+
+        A plain Play() on a track makes iTunes play it once and then go back to
+        whatever it was going to play next. The only way to make iTunes carry
+        on from the clicked song is to start its playlist and hop forward,
+        muted and paused so nothing is heard. Past HOP_LIMIT hops that takes
+        too long, so we play the song directly and queue the rest ourselves.
+        """
+        it = self._it
+        order = d.get("order")
+        playlist_id = d.get("playlist_id")
+        if not order or playlist_id is None:
+            self._play_track(d)
+            return
+        pl = self._playlist_by_id(playlist_id)
+        if pl.Shuffle:
+            # order means nothing under shuffle; just switch iTunes to this playlist
+            pl.PlayFirstTrack()
+            self._play_track(d)
+            return
+        if order == 1:
+            pl.PlayFirstTrack()
+            return
+        if order - 1 > HOP_LIMIT:
+            self._play_track(d)
+            rest = [t for t in self._track_cache.get(playlist_id, []) if (t.get("order") or 0) > order]
+            self._queue = rest
+            self._queue_current = d["db_id"]
+            self._last_remaining = None
+            self.queue_changed.emit(list(self._queue))
+            self.status.emit(f"Song {order} of {len(rest) + order}: the rest of the playlist is queued in AppleView")
+            return
+        self.status.emit(f"Lining up song {order} of {pl.Tracks.Count}")
+        volume = it.SoundVolume
+        try:
+            it.SoundVolume = 0
+            pl.PlayFirstTrack()
+            it.Pause()
+            for _ in range(order - 1):
+                it.NextTrack()
+            it.Play()
+        finally:
+            it.SoundVolume = volume
+        self.status.emit(f"{pl.Name}: playing from song {order}")
 
     # ---- AppleView's own queue ----
     def _play_next_queued(self):

@@ -53,6 +53,11 @@ QPushButton#primary {{ background: {ACCENT}; color: white; padding: 6px 14px; bo
 QPushButton#primary:hover {{ background: {ACCENT_DIM}; }}
 QPushButton#flat {{ color: {MUTED}; padding: 4px 8px; border-radius: 6px; }}
 QPushButton#flat:hover {{ color: {TEXT}; background: {PANEL_2}; }}
+QPushButton#mode {{ color: {MUTED}; padding: 2px 8px; border-radius: 6px; font-size: 16px; }}
+QPushButton#mode:hover {{ color: {TEXT}; background: {PANEL_2}; }}
+QPushButton#mode[active="true"] {{ color: {ACCENT}; }}
+QPushButton#time {{ color: {MUTED}; font-size: 12px; padding: 2px 4px; border-radius: 4px; }}
+QPushButton#time:hover {{ color: {TEXT}; }}
 
 QSlider::groove:horizontal {{ height: 4px; background: {BORDER}; border-radius: 2px; }}
 QSlider::sub-page:horizontal {{ background: {ACCENT}; border-radius: 2px; }}

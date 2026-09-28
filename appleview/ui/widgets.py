@@ -2,7 +2,7 @@
 
 from PyQt6.QtCore import QRectF, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPixmap
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QStyle, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSlider, QStyle, QWidget
 
 from .theme import ACCENT, BORDER, PANEL_2, TEXT
 
@@ -81,6 +81,41 @@ class IconButton(QPushButton):
         self._icon_name = icon_name
         self.setIcon(tinted_icon(self, icon_name, color, self._icon_size))
         self.setIconSize(QSize(self._icon_size, self._icon_size))
+
+
+class ClickSlider(QSlider):
+    """A slider where clicking anywhere jumps straight there.
+
+    Qt's default treats a click on the bar as "move one page", which for a
+    song means skipping ten seconds instead of going where you clicked.
+    """
+
+    def mousePressEvent(self, e):
+        if e.button() == Qt.MouseButton.LeftButton and self.maximum() > self.minimum():
+            opt_len = self.width() if self.orientation() == Qt.Orientation.Horizontal else self.height()
+            pos = e.position().x() if self.orientation() == Qt.Orientation.Horizontal else e.position().y()
+            value = QStyle.sliderValueFromPosition(self.minimum(), self.maximum(), int(pos), opt_len)
+            self.setValue(value)
+        # the handle is now under the cursor, so the normal press starts a drag
+        super().mousePressEvent(e)
+
+
+class ModeButton(QPushButton):
+    """Shuffle / repeat: a small text button that lights up when active."""
+
+    def __init__(self, text, tip="", parent=None):
+        super().__init__(text, parent)
+        self.setObjectName("mode")
+        self.setToolTip(tip)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setFixedHeight(28)
+        self.set_active(False)
+
+    def set_active(self, active):
+        self.setProperty("active", "true" if active else "false")
+        self.style().unpolish(self)
+        self.style().polish(self)
 
 
 class Transport(QWidget):
