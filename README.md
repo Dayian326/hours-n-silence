@@ -17,7 +17,18 @@ writes to the library.
   play/pause/next/previous. Drag it anywhere. Double-click or use the corner
   button to get the full window back. The tray icon does the same.
 - **Library browser**: playlists on the left (folders grouped), songs on the
-  right, search box, double-click to play, Play playlist button.
+  right in iTunes' play order, search box, Play playlist button.
+  Double-click a song and iTunes carries on with the songs after it, the way
+  it does when you click in iTunes itself. (iTunes' scripting hook can only
+  do that by starting the playlist and hopping forward, muted, about 30 ms a
+  hop; past song 400 AppleView plays the song directly and queues the rest.)
+- **Shuffle and repeat** buttons in the player bar. They set iTunes' own
+  shuffle and repeat for the playlist that is playing.
+- **Seek bar**: click anywhere to jump there. The right-hand time is time
+  left; click it to see the song length instead.
+- **Playlist covers**: the art you dragged onto playlists in iTunes is read
+  from iTunes' artwork cache (never written) and kept as PNGs in
+  `artwork_cache/`. How they are shown is being decided.
 - **Queue**: right-click a song, Add to queue. AppleView plays queued songs in
   order and takes over the moment iTunes would move on (including when
   crossfade starts the next song early). Next with a non-empty queue plays the
