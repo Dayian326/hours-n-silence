@@ -110,15 +110,31 @@ class App:
         self.popup.show_volume(percent)
 
     def _show_mini(self):
-        if self.mini.pos().isNull():
+        # first time: top-right corner; after that, wherever it was dragged to
+        if not getattr(self, "_mini_placed", False):
             self.mini.place_default()
+            self._mini_placed = True
         self.mini.show()
 
     def _show_full(self):
         self.window.restore_from_mini()   # emits restored, which hides the mini player
 
     def run(self):
+        from PyQt6.QtCore import Qt
+        from .ui.glass import apply_glass
+        from .ui.theme import set_glass
+        # the frosted glass needs the window to be see-through where panels are not
+        self.window.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.window.show()
+        how = apply_glass(self.window)
+        if how == "none":
+            # no glass available: go back to solid panels so nothing is see-through
+            self.window.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, False)
+            set_glass(False)
+            self.qt.setStyleSheet(build_qss())
+        else:
+            apply_glass(self.mini)
+            apply_glass(self.popup)
         self.worker.start()
         self.volume.start()
         code = self.qt.exec()

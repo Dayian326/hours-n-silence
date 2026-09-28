@@ -15,6 +15,10 @@ collapsed to see the name), recently played playlists pinned at the top of
 the rail, and an immersive playlist page: the cover blurred across the whole
 page, a card with the cover, name, description and Play / Shuffle, the songs
 on the right. The accent color follows the art of whatever is playing.
+Panels are frosted glass: Windows blurs whatever is behind the window and
+the panels sit on top of it, translucent, with a thin edge. The title bar is
+dark regardless of your Windows accent setting. If Windows cannot do the
+blur, the panels fall back to solid dark.
 
 - **Popup card** in the bottom-right corner whenever the system volume changes
   (knob, mouse, taskbar slider all count): album art, song, artist, volume bar.
@@ -115,7 +119,7 @@ and your playlists. Confirms the scripting hook works.
 - `appleview/palette.py` - the chameleon: one accent color from a piece of art
 - `appleview/state.py` - recents and rail state between runs
 - `appleview/ui/` - main window, rail, playlist page, backdrop, mini player,
-  popup, theme, shared widgets
+  popup, theme, shared widgets, glass (the Windows blur and dark title bar)
 - `assets/appleview.ico` - the icon, drawn by `tools/make_shortcut.py`
 - `probe.py` - connection test, safe to run any time
 - `tools/make_shortcut.py` - icon plus Start Menu and Desktop shortcuts
