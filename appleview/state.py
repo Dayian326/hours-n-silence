@@ -30,6 +30,8 @@ class State:
             viz["enabled"] = bool(saved.get("enabled", viz["enabled"]))
             viz["intensity"] = float(saved.get("intensity", viz["intensity"]))
             viz["kick_from_cover"] = bool(saved.get("kick_from_cover", viz["kick_from_cover"]))
+            if saved.get("palette_mode") in ("cover", "custom"):
+                viz["palette_mode"] = saved["palette_mode"]
             for key, el in viz["elements"].items():
                 s = (saved.get("elements") or {}).get(key) or {}
                 el["on"] = bool(s.get("on", el["on"]))

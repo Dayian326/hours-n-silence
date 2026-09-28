@@ -5,7 +5,8 @@ import copy
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
-    QCheckBox, QColorDialog, QDialog, QGridLayout, QHBoxLayout, QLabel, QPushButton, QSlider, QVBoxLayout,
+    QCheckBox, QColorDialog, QDialog, QGridLayout, QHBoxLayout, QLabel, QPushButton, QRadioButton, QSlider,
+    QVBoxLayout,
 )
 
 from .sparks import DEFAULT_VIZ
@@ -52,6 +53,16 @@ class SettingsDialog(QDialog):
         self.enabled.toggled.connect(self._push)
         root.addWidget(self.enabled)
 
+        source = QLabel("COLORS")
+        source.setObjectName("heading")
+        root.addWidget(source)
+        self.from_cover = QRadioButton("From the cover art: every part gets its own color from the art")
+        self.custom = QRadioButton("My colors, chosen below")
+        (self.from_cover if self.viz.get("palette_mode", "cover") == "cover" else self.custom).setChecked(True)
+        self.from_cover.toggled.connect(self._push)
+        root.addWidget(self.from_cover)
+        root.addWidget(self.custom)
+
         grid = QGridLayout()
         grid.setHorizontalSpacing(12)
         grid.setVerticalSpacing(8)
@@ -94,6 +105,11 @@ class SettingsDialog(QDialog):
         buttons.addStretch(1)
         buttons.addWidget(close)
         root.addLayout(buttons)
+        # grey out the color pickers while the cover is in charge
+        custom = self.custom.isChecked()
+        for _, btn in self.rows.values():
+            btn.setEnabled(custom)
+        self.cover.setEnabled(custom)
 
     def _reset(self):
         for key, (on, btn) in self.rows.items():
@@ -102,6 +118,11 @@ class SettingsDialog(QDialog):
 
     def _push(self, *_):
         self.viz["enabled"] = self.enabled.isChecked()
+        self.viz["palette_mode"] = "cover" if self.from_cover.isChecked() else "custom"
+        custom = self.viz["palette_mode"] == "custom"
+        for _, btn in self.rows.values():
+            btn.setEnabled(custom)
+        self.cover.setEnabled(custom)
         self.viz["kick_from_cover"] = self.cover.isChecked()
         self.viz["intensity"] = self.intensity.value() / 100.0
         for key, (on, btn) in self.rows.items():

@@ -22,7 +22,8 @@ MAX_SPARKS = 320
 DEFAULT_VIZ = {
     "enabled": True,
     "intensity": 1.0,
-    "kick_from_cover": True,      # kick sparks borrow the cover's colors instead of one color
+    "palette_mode": "cover",      # "cover": every part colored from the art; "custom": the colors below
+    "kick_from_cover": True,      # custom mode only: kick sparks borrow the cover's colors
     "elements": {
         "kick":  {"on": True, "color": "#4da3ff", "label": "Kick / beat"},
         "bass":  {"on": True, "color": "#8a5cff", "label": "Bass (edge glow)"},
@@ -40,6 +41,7 @@ class SparkLayer(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.viz = DEFAULT_VIZ
         self.cover_colors = ["#4da3ff"]
+        self.cover_palette = None     # part -> color, from the current cover
         self._sparks = []
         self._bass = 0.0
         self._glow = 0.0
@@ -54,7 +56,15 @@ class SparkLayer(QWidget):
     def set_cover_colors(self, colors):
         self.cover_colors = colors or ["#4da3ff"]
 
+    def set_cover_palette(self, palette):
+        self.cover_palette = palette
+
+    def _from_cover(self):
+        return self.viz.get("palette_mode", "cover") == "cover" and self.cover_palette
+
     def _color(self, element):
+        if self._from_cover():
+            return self.cover_palette.get(element) or self.viz["elements"][element]["color"]
         return self.viz["elements"][element]["color"]
 
     def _on(self, element):
@@ -78,7 +88,10 @@ class SparkLayer(QWidget):
         self._bass = f.get("bass", 0.0) if self._on("bass") else 0.0
         if f.get("kick") and self._on("kick"):
             self._glow = 1.0
-            colors = self.cover_colors if self.viz.get("kick_from_cover", True) else [self._color("kick")]
+            if self._from_cover():
+                colors = [self._color("kick")] + self.cover_colors[:2]
+            else:
+                colors = self.cover_colors if self.viz.get("kick_from_cover", True) else [self._color("kick")]
             self._spawn_kick(int((6 + 14 * f.get("kick_level", 0.5)) * k), colors)
         if f.get("snare") and self._on("snare"):
             self._spawn_snare(int((4 + 6 * f.get("snare_level", 0.5)) * k), self._color("snare"))

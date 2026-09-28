@@ -75,8 +75,9 @@ class MiniPlayer(QWidget):
     def set_art(self, path):
         self.art.set_art(path)
 
-    def set_cover_colors(self, colors):
+    def set_cover_colors(self, colors, palette=None):
         self.sparks.set_cover_colors(colors)
+        self.sparks.set_cover_palette(palette)
 
     def set_viz(self, viz):
         self.sparks.set_settings(viz)

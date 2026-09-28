@@ -45,6 +45,58 @@ def spark_colors(image_path, n=4):
         return [DEFAULT]
 
 
+def _hex(h, l, s):
+    r, g, b = colorsys.hls_to_rgb(h, l, s)
+    return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
+
+
+def cover_palette(image_path):
+    """One color per visualizer part, all drawn from the cover.
+
+    The cover's colors are ranked by liveliness, then picked so that each
+    part gets a hue at least 25 degrees away from the ones already taken.
+    When a cover has fewer distinct hues than parts, the remaining parts get
+    lighter or darker versions of what there is, so they still read apart.
+    """
+    if not image_path or not os.path.exists(image_path):
+        return None
+    try:
+        im = Image.open(image_path).convert("RGB")
+        im.thumbnail((96, 96))
+        q = im.quantize(colors=12, method=Image.Quantize.MEDIANCUT)
+        pal = q.getpalette()[:36]
+        total = 96 * 96
+        cands = []
+        for count, idx in q.getcolors():
+            r, g, b = pal[idx * 3: idx * 3 + 3]
+            h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+            if l < 0.10 or l > 0.95:
+                continue
+            cands.append((s * 0.65 + min(count / total, 0.3) * 0.35, h, l, s))
+        cands.sort(reverse=True)
+        picked = []
+        for _, h, l, s in cands:
+            if all(min(abs(h - ph), 1 - abs(h - ph)) * 360 >= 25 for ph, _, _ in picked):
+                picked.append((h, l, s))
+            if len(picked) == 4:
+                break
+        if not picked:
+            return None
+        while len(picked) < 4:
+            h, l, s = picked[len(picked) % len(picked[:1] or [(0, 0.5, 0.5)])]
+            picked.append(((h + 0.5) % 1.0, l, s))     # opposite hue as a stand-in
+        (h1, l1, s1), (h2, l2, s2), (h3, l3, s3), (h4, l4, s4) = picked
+        return {
+            "kick": _hex(h1, min(max(l1, 0.55), 0.72), min(max(s1, 0.6), 1.0)),
+            "voice": _hex(h2, min(max(l2, 0.55), 0.72), min(max(s2, 0.55), 1.0)),
+            "snare": _hex(h3, min(max(l3, 0.6), 0.75), min(max(s3, 0.5), 1.0)),
+            "bass": _hex(h4, min(max(l4, 0.45), 0.6), min(max(s4, 0.5), 1.0)),
+            "hats": _hex(h2, 0.9, min(max(s2, 0.3), 0.8)),      # a pale twinkle of the voice hue
+        }
+    except Exception:
+        return None
+
+
 def vibrant_color(image_path):
     if not image_path or not os.path.exists(image_path):
         return DEFAULT

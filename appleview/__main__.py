@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QApplication  # noqa: E402
 
 from .audio import LoopbackMeter  # noqa: E402
 from .itunes_worker import ITunesWorker  # noqa: E402
-from .palette import spark_colors, vibrant_color  # noqa: E402
+from .palette import cover_palette, spark_colors, vibrant_color  # noqa: E402
 from .ui.main_window import MainWindow  # noqa: E402
 from .ui.mini_player import MiniPlayer  # noqa: E402
 from .ui.popup import NowPlayingPopup  # noqa: E402
@@ -103,7 +103,7 @@ class App:
         self.mini.set_art(path)
         self.popup.set_art(path)
         self._chameleon(path)
-        self.mini.set_cover_colors(spark_colors(path))
+        self.mini.set_cover_colors(spark_colors(path), cover_palette(path))
 
     def _chameleon(self, art_path):
         """The accent follows the playing song's art."""
