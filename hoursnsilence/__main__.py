@@ -28,6 +28,12 @@ def _already_running():
     sock = QLocalSocket()
     sock.connectToServer(SINGLE_INSTANCE_NAME)
     if sock.waitForConnected(300):
+        try:
+            # we were just clicked, so we may hand our right to come to the front to the running copy
+            import ctypes
+            ctypes.windll.user32.AllowSetForegroundWindow(-1)
+        except Exception:
+            pass
         sock.write(b"show")
         sock.flush()
         sock.waitForBytesWritten(300)
@@ -195,6 +201,13 @@ class App:
             conn = self._server.nextPendingConnection()
             conn.disconnectFromServer()
         self._show_full()
+        try:
+            import ctypes
+            hwnd = int(self.window.winId())
+            ctypes.windll.user32.ShowWindow(hwnd, 9)          # SW_RESTORE
+            ctypes.windll.user32.SetForegroundWindow(hwnd)
+        except Exception:
+            pass
 
     def _show_full(self):
         self.window.restore_from_mini()   # emits restored, which hides the mini player
