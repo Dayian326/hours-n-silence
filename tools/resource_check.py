@@ -17,7 +17,7 @@ import psutil
 def find_app():
     for p in psutil.process_iter(["name", "cmdline"]):
         try:
-            if (p.info["name"] or "").lower().startswith("python") and "appleview" in " ".join(p.info["cmdline"] or []).lower():
+            if (p.info["name"] or "").lower().startswith("python") and "hoursnsilence" in " ".join(p.info["cmdline"] or []).lower():
                 return p
         except Exception:
             continue

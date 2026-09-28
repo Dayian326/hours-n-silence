@@ -17,6 +17,7 @@ from win32com.client import CastTo, gencache
 
 from .cache import artwork_path_for, save_artwork
 from .covers import cover_for, persistent_hex
+from .descriptions import descriptions
 
 PLAYLIST_KIND_USER = 2
 SPECIAL_NONE = 0          # a normal playlist
@@ -250,6 +251,7 @@ class ITunesWorker(QThread):
     def _load_playlists(self):
         it = self._it
         pls = it.LibrarySource.Playlists
+        descs = descriptions()      # {} until the iTunes XML export exists
         out = []
         for i in range(1, pls.Count + 1):
             p = pls.Item(i)
@@ -277,6 +279,7 @@ class ITunesWorker(QThread):
                 "parent": parent.playlistID if parent is not None else None,
                 "count": p.Tracks.Count if special != SPECIAL_FOLDER else 0,
                 "cover": cover,
+                "description": descs.get(pid, ""),
             })
         self.playlists.emit(out)
         self.status.emit(f"{len(out)} playlists loaded")

@@ -15,7 +15,7 @@ sys.coinit_flags = 2
 from PyQt6.QtCore import QCoreApplication
 from win32com.client import gencache
 
-from appleview.audio import LoopbackMeter
+from hoursnsilence.audio import LoopbackMeter
 
 app = QCoreApplication([])
 it = gencache.EnsureDispatch("iTunes.Application")

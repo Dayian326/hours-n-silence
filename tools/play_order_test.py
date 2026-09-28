@@ -18,7 +18,7 @@ sys.coinit_flags = 2
 from PyQt6.QtCore import QCoreApplication
 from win32com.client import CastTo, gencache
 
-from appleview.itunes_worker import ITunesWorker
+from hoursnsilence.itunes_worker import ITunesWorker
 
 PLAYLIST = "hrs n silence pt 6"
 N = 8

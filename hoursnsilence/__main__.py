@@ -1,4 +1,4 @@
-"""Run with:  python -m appleview"""
+"""Run with:  python -m hoursnsilence"""
 
 import sys
 
@@ -195,7 +195,7 @@ def _install_error_log():
     import os
     import traceback
 
-    log_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "appleview.log")
+    log_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "hoursnsilence.log")
     logging.basicConfig(filename=log_path, level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")
 

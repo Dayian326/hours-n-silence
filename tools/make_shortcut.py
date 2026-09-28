@@ -56,7 +56,7 @@ def make_shortcut(folder):
     link = pythoncom.CoCreateInstance(shell.CLSID_ShellLink, None, pythoncom.CLSCTX_INPROC_SERVER,
                                       shell.IID_IShellLink)
     link.SetPath(pythonw)
-    link.SetArguments("-m appleview")
+    link.SetArguments("-m hoursnsilence")
     link.SetWorkingDirectory(ROOT)
     link.SetIconLocation(ICON, 0)
     link.SetDescription("Hours N Silence music player")

@@ -10,5 +10,6 @@ build/
 *.spec
 scratch/
 probe_artwork.*
-appleview.log
-appleview_state.json
+hoursnsilence.log
+hoursnsilence_state.json
+dj/

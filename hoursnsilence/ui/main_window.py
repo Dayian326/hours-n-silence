@@ -7,10 +7,11 @@ from PyQt6.QtCore import QEvent, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QAction, QColor, QIcon, QPainter, QPixmap
 from PyQt6.QtWidgets import (
     QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QMainWindow, QMenu, QPushButton,
-    QSystemTrayIcon, QVBoxLayout, QWidget,
+    QStackedWidget, QSystemTrayIcon, QVBoxLayout, QWidget,
 )
 
 from ..state import State
+from .home_page import HomePage
 from .playlist_page import PlaylistPage
 from .rail import PlaylistRail
 from .theme import ACCENT, fmt_time
@@ -81,14 +82,21 @@ class MainWindow(QMainWindow):
         self.rail.expanded_changed.connect(self._on_rail_expanded)
         middle.addWidget(self.rail)
 
+        self.home = HomePage()
+        self.home.open_playlist.connect(self._on_playlist_clicked)
+        self.home.play_playlist.connect(self._on_playlist_double)
         self.page = PlaylistPage()
-        self.page.setObjectName("panel")
+        self.stack = QStackedWidget()
+        self.stack.setObjectName("panel")
+        self.stack.addWidget(self.home)
+        self.stack.addWidget(self.page)
         self.page.play_playlist.connect(self._play_selected_playlist)
         self.page.shuffle_playlist.connect(self._shuffle_selected_playlist)
         self.page.queue_all.connect(self._queue_all)
         self.page.play_track.connect(lambda t: self.command.emit("play_track", t))
         self.page.enqueue_track.connect(self._enqueue)
-        middle.addWidget(self.page, 1)
+        middle.addWidget(self.stack, 1)
+        self.rail.home_clicked.connect(self.show_home)
 
         # queue panel
         self.queue_panel = QFrame()
@@ -245,13 +253,19 @@ class MainWindow(QMainWindow):
         self._playlists = playlists
         self._by_id = {p["db_id"]: p for p in playlists}
         self.rail.set_playlists(playlists, self.state.recent)
+        self.home.set_playlists(playlists)
         current = self._by_id.get(self._selected_playlist) if self._selected_playlist is not None else None
-        if current is None:
-            current = next((p for p in playlists if p.get("music")), None)
         if current is not None:
-            self._open_playlist(current)
+            self._open_playlist(current)      # after a reconnect, stay where we were
+        else:
+            self.show_home()
+
+    def show_home(self):
+        self.stack.setCurrentWidget(self.home)
+        self.rail.set_selected(None)
 
     def _open_playlist(self, p):
+        self.stack.setCurrentWidget(self.page)
         self._selected_playlist = p["db_id"]
         self.rail.set_selected(p["db_id"])
         self.page.set_playlist(p, self._art_path)

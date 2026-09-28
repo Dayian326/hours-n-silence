@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import time
 sys.coinit_flags = 2
 from PyQt6.QtCore import QCoreApplication
-from appleview.itunes_worker import ITunesWorker
+from hoursnsilence.itunes_worker import ITunesWorker
 
 app = QCoreApplication([])
 w = ITunesWorker()

@@ -9,7 +9,7 @@ grouped.
 from PyQt6.QtCore import QRectF, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath, QPixmap
 from PyQt6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QVBoxLayout, QWidget,
+    QFrame, QLabel, QPushButton, QScrollArea, QVBoxLayout, QWidget,
 )
 
 from .theme import BORDER, MUTED, PANEL_2, TEXT, accent
@@ -187,6 +187,7 @@ class PlaylistRail(QFrame):
     playlist_clicked = pyqtSignal(object)
     playlist_double_clicked = pyqtSignal(object)
     expanded_changed = pyqtSignal(bool)
+    home_clicked = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -202,8 +203,9 @@ class PlaylistRail(QFrame):
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 8, 0, 8)
         lay.setSpacing(0)
-        top = QHBoxLayout()
+        top = QVBoxLayout()
         top.setContentsMargins(12, 0, 8, 4)
+        top.setSpacing(2)
         self.toggle = QPushButton("»")
         self.toggle.setObjectName("mode")
         self.toggle.setToolTip("Show playlist names")
@@ -212,6 +214,14 @@ class PlaylistRail(QFrame):
         self.toggle.setFixedSize(COVER, 30)
         self.toggle.clicked.connect(lambda: self.set_expanded(not self._expanded))
         top.addWidget(self.toggle)
+        self.home_btn = QPushButton("⌂")
+        self.home_btn.setObjectName("mode")
+        self.home_btn.setToolTip("Home: all your playlists")
+        self.home_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.home_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.home_btn.setFixedSize(COVER, 30)
+        self.home_btn.clicked.connect(self.home_clicked)
+        top.addWidget(self.home_btn)
         top.addStretch(1)
         lay.addLayout(top)
 

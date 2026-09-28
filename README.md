@@ -1,98 +1,92 @@
 # Hours N Silence
 
-Formerly AppleView. The Python package is still called `appleview`, so the
-run command has not changed.
+A private, modern front end for old iTunes on Windows. iTunes keeps doing
+what it does (playing, downloads, iCloud sync, the mixed library of
+downloaded files and Apple Music tracks). Hours N Silence gives it a new
+face: black glass, your playlist covers, a mini player with a live
+visualizer, and a volume popup that iTunes never had.
 
-A minimalist, private music player for Windows that sits on top of old iTunes.
+It never writes to the library. The only things it ever tells iTunes are
+play, pause, next, previous, jump to a spot, shuffle, repeat, and volume.
 
-iTunes keeps doing everything it does today: downloads, iCloud sync, the mixed
-library of downloaded files and Apple Music tracks. Hours N Silence only reads from
-iTunes and sends it play, pause, next, previous, seek and volume. It never
-writes to the library.
+## How it works
+
+- **iTunes plays, this displays and controls.** Old iTunes ships with a
+  scripting interface that Apple built for other programs to use. Hours N
+  Silence reads the library and playlists through it and sends playback
+  commands back. The new Apple Music app for Windows has no such interface,
+  which is why this is built on old iTunes.
+- **Nothing locked is touched.** Apple Music tracks stay inside Apple's
+  player. No converting, no ripping, no playing them anywhere else.
+- **The sound is measured after it leaves.** Windows offers a live copy of
+  whatever is coming out of an output device. The visualizer reads that copy
+  about fifty times a second, measures it, and drops it. Nothing is recorded.
+- **Windows draws the glass.** The frosted panels are Windows' own blur
+  behind the window, with dark translucent panes on top.
+- **Covers come from iTunes' own cache** on disk, read only.
 
 ## What it does
 
-v2 look: a playlist rail on the left (covers only, or covers with names
-when you expand it with the button at the top; hover a cover while it is
-collapsed to see the name), recently played playlists pinned at the top of
-the rail, and an immersive playlist page: the cover blurred across the whole
-page, a card with the cover, name, description and Play / Shuffle, the songs
-on the right. The accent color follows the art of whatever is playing.
-Panels are black glass: Windows blurs whatever is behind the window and
-the panels sit on top of it as dark translucent panes with a hairline edge.
-The player bar carries a faint edge in the accent color. The title bar is
-dark regardless of your Windows accent setting. If Windows cannot do the
-blur, the panels fall back to solid dark.
+- **Playlist rail** on the left: covers only, or covers with names when
+  expanded. Hover a cover while collapsed to see its name. Recently played
+  playlists pin at the top; everything else sits below, folders grouped.
+- **Immersive playlist page**: the cover blurred across the page, a card with
+  the cover, name, description and song count, Play, Shuffle and Add all to
+  queue, and the songs on the right in iTunes' play order, with search.
+- **Double-click a song** and iTunes carries on with the songs after it, the
+  way it does when you click inside iTunes itself.
+- **Chameleon accent**: buttons, sliders and highlights take their color from
+  the art of whatever is playing.
+- **Black glass and a dark title bar**, regardless of the Windows accent
+  setting. If Windows cannot blur, the panels fall back to solid dark.
+- **Player bar**: shuffle, repeat, previous, play, next, a seek bar that
+  jumps where you click, time left (click for the song length), volume, a
+  queue panel, and a mini player button.
+- **Queue**: right-click a song, Add to queue. Queued songs play in order and
+  take over the moment iTunes would move on, crossfade included.
+- **Mini player** when you minimize: a small always-on-top glass card with
+  art and controls. Drag it anywhere; double-click to get the full window
+  back. The tray icon does the same.
+- **Visualizer** in the mini player. Each part of the sound has its own look
+  and color:
 
-**Visualizer.** While the mini player is on screen, Hours N Silence
-listens to what is coming out of your speakers (a Windows loopback of the
-output device; nothing is recorded) and picks the song apart, about fifty
-times a second. Each part has its own look and color:
+  | Part | What it is | Look |
+  |---|---|---|
+  | Kick / beat | a hit in the low end, 40 to 120 Hz | big sparks from the art's edge, flying right |
+  | Bass | how much low end is there right now | the card's edge glows, thicker with more bass |
+  | Snare / clap | a mid thump plus a burst of noise | quick streaks dropping in from the top |
+  | Voice / lead | center-panned energy in the voice range | soft motes rising along the text |
+  | Hi-hats / sparkle | a hit in the top end, 8 to 16 kHz | tiny twinkles, gone in a blink |
 
-| Part | What it is | Look | Default color |
-|---|---|---|---|
-| Kick / beat | a hit in the low end, 40 to 120 Hz | big sparks from the art's edge, flying right | the cover's colors, or blue |
-| Bass | how much low end is there right now | the card's edge glows, thicker with more bass | purple |
-| Snare / clap | a mid thump plus a burst of noise | quick streaks dropping in from the top | orange |
-| Voice / lead | center-panned energy in the voice range | soft motes rising along the text | red |
-| Hi-hats / sparkle | a hit in the top end, 8 to 16 kHz | tiny twinkles, gone in a blink | white |
+  By default every part is colored from the playing song's cover, with the
+  hues kept apart so they read as different things. Settings (the button in
+  the status line, or the tray menu) switches to your own colors, turns parts
+  on or off, and sets how much of it there is. Voice is "what sits in the
+  middle of the stereo picture", which is where vocals live but lead melodies
+  too, so read it as voice or lead.
+- **Volume popup** bottom-right whenever any output device's volume changes:
+  art, song, artist, the level, and which device moved. Never takes focus,
+  fades after three seconds. Also shows when a new song starts while the
+  full window is out of the way.
+- **Playlist covers** are the art you dragged onto playlists in iTunes.
+  Playlists without one borrow the playing song's art.
+- **Descriptions** appear once iTunes' XML export is on (Edit, Preferences,
+  Advanced, "Share iTunes Library XML with other applications").
 
-Voice is "what sits in the middle of the stereo picture", which is where
-vocals live, but lead melodies live there too, so read it as voice or lead.
-Settings (button in the status line, or the tray menu) lets you turn each
-part on or off, pick its color, choose whether kick sparks use the cover's
-colors, and set how much of it there is. The listener starts when the mini
-player shows and stops when it hides. Virtual devices like Sonar's channels
-do not offer a loopback, so it listens on the physical output carrying the
-final mix.
+Media keys keep working: iTunes handles them and Hours N Silence updates.
 
-Cost, measured with `python tools/resource_check.py` while playing with the
-mini player up: about 1 percent of the CPU, 157 MB of memory, no GPU work
-of its own.
+## Cost
 
-**Volume popup** watches every output device, so the knob is caught
-whichever device it is turning; the popup names the device.
-
-- **Popup card** in the bottom-right corner whenever the system volume changes
-  (knob, mouse, taskbar slider all count): album art, song, artist, volume bar.
-  Never takes focus, fades after three seconds. Also shows when a new song
-  starts while the full window is out of the way.
-- **Mini player** when you minimize: a small always-on-top card with art and
-  play/pause/next/previous. Drag it anywhere. Double-click or use the corner
-  button to get the full window back. The tray icon does the same.
-- **Library browser**: playlists on the left (folders grouped), songs on the
-  right in iTunes' play order, search box, Play playlist button.
-  Double-click a song and iTunes carries on with the songs after it, the way
-  it does when you click in iTunes itself. (iTunes' scripting hook can only
-  do that by starting the playlist and hopping forward, muted, about 30 ms a
-  hop; past song 400 Hours N Silence plays the song directly and queues the rest.)
-- **Shuffle and repeat** buttons in the player bar. They set iTunes' own
-  shuffle and repeat for the playlist that is playing.
-- **Seek bar**: click anywhere to jump there. The right-hand time is time
-  left; click it to see the song length instead.
-- **Playlist covers**: the art you dragged onto playlists in iTunes is read
-  from iTunes' artwork cache (never written) and kept as PNGs in
-  `artwork_cache/`. Playlists without a cover borrow the playing song's art.
-- **Descriptions**: shown when available. iTunes does not expose them to
-  scripts yet, so the card says "No description yet" for now.
-- **Remembers**: recently played playlists and whether the rail is expanded,
-  in `appleview_state.json` (gitignored).
-- **Queue**: right-click a song, Add to queue. Hours N Silence plays queued songs in
-  order and takes over the moment iTunes would move on (including when
-  crossfade starts the next song early). Next with a non-empty queue plays the
-  next queued song. Picking a different song in iTunes mid-song stops the
-  queue from driving; the songs stay listed.
-- **Dark theme** throughout.
-
-Media keys keep working exactly as before: iTunes handles them and Hours N Silence
-updates to match.
+Measured with `python tools/resource_check.py` while playing with the mini
+player and visualizer up: about 1 percent of the CPU, 157 MB of memory, no
+GPU work of its own. The listener runs only while the mini player shows.
 
 ## Requirements
 
 - Windows 11, iTunes from Apple's desktop installer (tested on 12.13.10.3).
 - Do NOT install the Apple Music, Apple TV, or Apple Devices apps from the
   Microsoft Store. They lock iTunes down to podcasts and audiobooks.
-- Python 3.12+
+- Python 3.12 or newer.
 
 ```
 pip install -r requirements.txt
@@ -101,13 +95,13 @@ pip install -r requirements.txt
 ## Run
 
 ```
-python -m appleview
+python -m hoursnsilence
 ```
 
-If iTunes is closed, Hours N Silence starts it in the background and minimizes its
-window, so Hours N Silence is the only thing you open. iTunes stays running when
-you close Hours N Silence. Closing the window quits Hours N Silence; minimizing goes to
-the mini player.
+If iTunes is
+closed, Hours N Silence starts it in the background and minimizes its
+window. iTunes stays running when you close Hours N Silence. Closing the
+window quits; minimizing goes to the mini player.
 
 ## Pin it to the taskbar
 
@@ -117,44 +111,44 @@ Once:
 python tools/make_shortcut.py
 ```
 
-That draws the icon (`assets/hours_n_silence.ico`) and puts a Hours N Silence shortcut
-in the Start Menu and on the Desktop. Open Hours N Silence from either, right-click
-its taskbar icon, Pin to taskbar. Safe to run again any time.
+That draws the icon and puts a Hours N Silence shortcut in the Start Menu
+and on the Desktop. Open it from either, right-click its taskbar icon, Pin
+to taskbar. Safe to run again any time.
 
-## Day-one test
+## Tests
 
-```
-python probe.py
-```
+All of them run against a live iTunes and put playback back the way it was.
 
-Prints the iTunes version, the current track, whether artwork came through,
-and your playlists. Confirms the scripting hook works.
+- `python probe.py` - can we talk to iTunes at all
+- `python tools/play_order_test.py` - double-click a song, the next one follows
+- `python tools/queue_test.py` - the queue hands over between songs
+- `python tools/beat_test.py` - the listener hears kicks, snares, hats, voice
+- `python tools/resource_check.py` - CPU, memory and GPU of the running app
 
 ## Known rough edges
 
-- **Queue is Hours N Silence's, not iTunes'.** iTunes' scripting hook refuses to add
-  songs to playlists on this library (every call style returns "parameter is
-  incorrect", most likely because Sync Library is on), so the queue cannot be
-  an iTunes playlist. Consequences: the queue is gone when Hours N Silence closes,
-  and the handoff between queued songs is a cut, not a crossfade.
-- **Quitting iTunes while Hours N Silence runs** shows iTunes' "an application is
-  using iTunes" prompt. Close Hours N Silence first.
-- **The stock Windows volume slider** still appears bottom-center. Hours N Silence's
-  card is bottom-right so they do not overlap.
-- Playlists load their songs on first click (about a second for the biggest).
+- The queue is Hours N Silence's, not iTunes'. iTunes refuses playlist edits
+  from scripts on a synced library, so the queue cannot be an iTunes
+  playlist: it is gone when the app closes, and the handoff between queued
+  songs is a cut, not a crossfade.
+- Quitting iTunes while Hours N Silence runs shows iTunes' "an application
+  is using iTunes" prompt. Close Hours N Silence first.
+- The stock Windows volume slider still appears bottom-center. The card is
+  bottom-right so they do not overlap.
+- Virtual audio devices (Sonar channels and the like) do not offer a
+  loopback, so the visualizer listens on the physical output carrying the
+  final mix.
 
 ## Layout
 
-- `appleview/itunes_worker.py` - the one thread that talks to iTunes
-- `appleview/volume.py` - watches the Windows master volume
-- `appleview/cache.py` - artwork cache (`artwork_cache/`, gitignored)
-- `appleview/covers.py` - playlist covers out of iTunes' artwork cache
-- `appleview/palette.py` - the chameleon: one accent color from a piece of art
-- `appleview/state.py` - recents and rail state between runs
-- `appleview/ui/` - main window, rail, playlist page, backdrop, mini player,
-  popup, theme, shared widgets, glass (the Windows blur and dark title bar)
+- `hoursnsilence/itunes_worker.py` - the one thread that talks to iTunes
+- `hoursnsilence/audio.py` - the listener: kick, bass, snare, voice, hats
+- `hoursnsilence/volume.py` - watches every output device's volume
+- `hoursnsilence/covers.py` - playlist covers out of iTunes' artwork cache
+- `hoursnsilence/descriptions.py` - playlist descriptions from the XML export
+- `hoursnsilence/palette.py` - colors from art: the accent and the visualizer palette
+- `hoursnsilence/state.py` - recents, rail state and settings between runs
+- `hoursnsilence/ui/` - main window, rail, playlist page, backdrop, mini player,
+  sparks, popup, settings, theme, glass, shared widgets
 - `assets/hours_n_silence.ico` - the icon, drawn by `tools/make_shortcut.py`
-- `probe.py` - connection test, safe to run any time
-- `tools/make_shortcut.py` - icon plus Start Menu and Desktop shortcuts
-- `tools/queue_test.py` - proves the queue handoff against a running iTunes
-- `tools/shot.py` - screenshot helper used while testing the UI
+- `tools/` - shortcut maker, tests, resource check, screenshot helper

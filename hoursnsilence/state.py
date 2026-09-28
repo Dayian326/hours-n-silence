@@ -1,6 +1,6 @@
 """Small things Hours N Silence remembers between runs: recently played
 playlists, whether the sidebar is expanded, the visualizer's colors. Lives
-in appleview_state.json next to the code, gitignored."""
+in hoursnsilence_state.json next to the code, gitignored."""
 
 import copy
 import json
@@ -8,7 +8,7 @@ import os
 
 from .ui.sparks import DEFAULT_VIZ
 
-STATE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "appleview_state.json")
+STATE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "hoursnsilence_state.json")
 RECENT_MAX = 6
 
 
