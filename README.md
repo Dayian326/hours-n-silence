@@ -24,13 +24,31 @@ The player bar carries a faint edge in the accent color. The title bar is
 dark regardless of your Windows accent setting. If Windows cannot do the
 blur, the panels fall back to solid dark.
 
-**Beat sparks.** While the mini player is on screen, Hours N Silence
+**Visualizer.** While the mini player is on screen, Hours N Silence
 listens to what is coming out of your speakers (a Windows loopback of the
-output device; nothing is recorded) and on every beat sends sparks in the
-cover's colors across the card, with a pulse of the edge. The listener
-starts when the mini player shows and stops when it hides. Virtual devices
-like Sonar's channels do not offer a loopback, so it listens on the
-physical output carrying the final mix.
+output device; nothing is recorded) and picks the song apart, about fifty
+times a second. Each part has its own look and color:
+
+| Part | What it is | Look | Default color |
+|---|---|---|---|
+| Kick / beat | a hit in the low end, 40 to 120 Hz | big sparks from the art's edge, flying right | the cover's colors, or blue |
+| Bass | how much low end is there right now | the card's edge glows, thicker with more bass | purple |
+| Snare / clap | a mid thump plus a burst of noise | quick streaks dropping in from the top | orange |
+| Voice / lead | center-panned energy in the voice range | soft motes rising along the text | red |
+| Hi-hats / sparkle | a hit in the top end, 8 to 16 kHz | tiny twinkles, gone in a blink | white |
+
+Voice is "what sits in the middle of the stereo picture", which is where
+vocals live, but lead melodies live there too, so read it as voice or lead.
+Settings (button in the status line, or the tray menu) lets you turn each
+part on or off, pick its color, choose whether kick sparks use the cover's
+colors, and set how much of it there is. The listener starts when the mini
+player shows and stops when it hides. Virtual devices like Sonar's channels
+do not offer a loopback, so it listens on the physical output carrying the
+final mix.
+
+Cost, measured with `python tools/resource_check.py` while playing with the
+mini player up: about 1 percent of the CPU, 157 MB of memory, no GPU work
+of its own.
 
 **Volume popup** watches every output device, so the knob is caught
 whichever device it is turning; the popup names the device.

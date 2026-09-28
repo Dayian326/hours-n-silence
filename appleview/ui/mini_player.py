@@ -75,12 +75,15 @@ class MiniPlayer(QWidget):
     def set_art(self, path):
         self.art.set_art(path)
 
-    def set_spark_colors(self, colors, edge):
-        self.sparks.set_colors(colors, edge)
+    def set_cover_colors(self, colors):
+        self.sparks.set_cover_colors(colors)
 
-    def on_level(self, bass, overall, beat):
+    def set_viz(self, viz):
+        self.sparks.set_settings(viz)
+
+    def on_features(self, f):
         if self.isVisible():
-            self.sparks.on_level(bass, overall, beat)
+            self.sparks.on_features(f)
 
     def apply_accent(self):
         self.transport.set_playing(self.transport.play_btn._icon_name == "SP_MediaPause")

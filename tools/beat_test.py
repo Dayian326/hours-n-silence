@@ -1,9 +1,9 @@
-"""Positive control for the beat meter: listen for six seconds and report.
+"""Positive control for the listener: listen for eight seconds and report what it heard.
 
     python tools/beat_test.py
 
 Starts a song in iTunes if nothing is playing, runs the same listener the
-mini player uses, and prints how many beats it heard and the bass levels.
+mini player uses, and prints how many kicks, snares and hi-hat hits it heard and how much voice.
 Puts playback back the way it was. It never changes the library.
 """
 import os
@@ -24,9 +24,9 @@ if not was_playing:
     it.Play()
 print("song:", it.CurrentTrack.Name if it.CurrentTrack else None, "| was playing:", was_playing, flush=True)
 
-levels, beats, statuses = [], [], []
+feats, statuses = [], []
 m = LoopbackMeter()
-m.level.connect(lambda b, a, beat: (levels.append((b, a)), beats.append(time.time()) if beat else None))
+m.features.connect(lambda f: feats.append(dict(f, t=time.time())))
 m.status.connect(lambda s: (statuses.append(s), print("status:", s, flush=True)))
 m.start()
 t0 = time.time()
@@ -37,13 +37,11 @@ m.stop()
 m.wait(4000)
 if not was_playing:
     it.Pause()
-n = len(levels)
+n = len(feats)
+kicks = sum(1 for f in feats if f["kick"]); snares = sum(1 for f in feats if f["snare"]); hats = sum(1 for f in feats if f["hats"])
 if n:
-    bass = [b for b, _ in levels]
-    print(f"samples: {n} | bass mean {sum(bass)/n:.2f} max {max(bass):.2f} | beats: {len(beats)}", flush=True)
-    if len(beats) > 1:
-        gaps = [round(b - a, 2) for a, b in zip(beats, beats[1:])]
-        print("beat gaps (s):", gaps[:20], flush=True)
-ok = n > 50 and len(beats) >= 4
+    voice = [f["voice"] for f in feats]; bass = [f["bass"] for f in feats]
+    print(f"samples: {n} | kicks {kicks} | snares {snares} | hats {hats} | voice mean {sum(voice)/n:.2f} max {max(voice):.2f} | bass mean {sum(bass)/n:.2f}", flush=True)
+ok = n > 50 and kicks >= 4
 print("RESULT:", "PASS" if ok else "FAIL", flush=True)
 sys.exit(0 if ok else 1)

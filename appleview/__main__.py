@@ -71,9 +71,12 @@ class App:
         # the knob
         self.volume.changed.connect(self._on_volume)
 
-        # the beat listener follows the mini player
+        # the listener follows the mini player
         self.mini.shown.connect(self._start_meter)
         self.mini.hidden.connect(self._stop_meter)
+        self.mini.set_viz(self.window.state.viz)
+        self.window.settings_requested.connect(self._open_settings)
+        self._settings = None
 
     def _command(self, name, arg):
         if arg is None:
@@ -100,7 +103,7 @@ class App:
         self.mini.set_art(path)
         self.popup.set_art(path)
         self._chameleon(path)
-        self.mini.set_spark_colors(spark_colors(path), accent())
+        self.mini.set_cover_colors(spark_colors(path))
 
     def _chameleon(self, art_path):
         """The accent follows the playing song's art."""
@@ -120,9 +123,25 @@ class App:
         if self.meter is not None:
             return
         self.meter = LoopbackMeter()
-        self.meter.level.connect(self.mini.on_level)
+        self.meter.features.connect(self.mini.on_features)
         self.meter.status.connect(self.window.set_status)
         self.meter.start()
+
+    def _open_settings(self):
+        from .ui.settings_dialog import SettingsDialog
+        if self._settings is not None:
+            self._settings.raise_()
+            self._settings.activateWindow()
+            return
+        dlg = SettingsDialog(self.window.state.viz)
+        dlg.changed.connect(self._on_viz_changed)
+        dlg.finished.connect(lambda _=None: setattr(self, "_settings", None))
+        self._settings = dlg
+        dlg.show()
+
+    def _on_viz_changed(self, viz):
+        self.window.state.set_viz(viz)
+        self.mini.set_viz(viz)
 
     def _stop_meter(self):
         if self.meter is None:
