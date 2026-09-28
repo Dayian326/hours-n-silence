@@ -8,6 +8,7 @@ sys.coinit_flags = 2  # noqa: E402
 from PyQt6.QtWidgets import QApplication  # noqa: E402
 
 from .audio import LoopbackMeter  # noqa: E402
+from .discord_presence import DiscordPresence  # noqa: E402
 from .itunes_worker import ITunesWorker  # noqa: E402
 from .palette import cover_palette, spark_colors, vibrant_color  # noqa: E402
 from .ui.main_window import MainWindow  # noqa: E402
@@ -44,6 +45,10 @@ class App:
         self.popup = NowPlayingPopup()
         self.volume = VolumeWatcher()
         self.meter = None            # the beat listener, only alive while the mini player shows
+        self.presence = DiscordPresence()
+        self.presence.status.connect(self.window.set_status)
+        d = self.window.state.discord
+        self.presence.configure(d.get("enabled", True), d.get("app_id", ""))
 
         self._art_path = ""
         self._last_track_id = None
@@ -85,6 +90,7 @@ class App:
             self.worker.send(name, arg)
 
     def _on_snapshot(self, snap):
+        self.presence.push(snap)
         self.window.update_snapshot(snap)
         self.mini.update_snapshot(snap)
         self.popup.update_snapshot(snap)
@@ -133,11 +139,16 @@ class App:
             self._settings.raise_()
             self._settings.activateWindow()
             return
-        dlg = SettingsDialog(self.window.state.viz)
+        dlg = SettingsDialog(self.window.state.viz, self.window.state.discord)
         dlg.changed.connect(self._on_viz_changed)
+        dlg.discord_changed.connect(self._on_discord_changed)
         dlg.finished.connect(lambda _=None: setattr(self, "_settings", None))
         self._settings = dlg
         dlg.show()
+
+    def _on_discord_changed(self, enabled, app_id):
+        self.window.state.set_discord(enabled, app_id)
+        self.presence.configure(enabled, app_id)
 
     def _on_viz_changed(self, viz):
         self.window.state.set_viz(viz)
@@ -179,8 +190,11 @@ class App:
             apply_glass(self.popup, frameless=True)
         self.worker.start()
         self.volume.start()
+        self.presence.start()
         code = self.qt.exec()
         self._stop_meter()
+        self.presence.stop()
+        self.presence.wait(3000)
         self.worker.stop()
         self.worker.wait(2000)
         return code

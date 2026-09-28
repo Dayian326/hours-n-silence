@@ -5,8 +5,8 @@ import copy
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
-    QCheckBox, QColorDialog, QDialog, QGridLayout, QHBoxLayout, QLabel, QPushButton, QRadioButton, QSlider,
-    QVBoxLayout,
+    QCheckBox, QColorDialog, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QRadioButton,
+    QSlider, QVBoxLayout,
 )
 
 from .sparks import DEFAULT_VIZ
@@ -35,9 +35,11 @@ class ColorButton(QPushButton):
 
 class SettingsDialog(QDialog):
     changed = pyqtSignal(dict)      # the whole viz settings, live as you change them
+    discord_changed = pyqtSignal(bool, str)
 
-    def __init__(self, viz, parent=None):
+    def __init__(self, viz, discord=None, parent=None):
         super().__init__(parent)
+        discord = discord or {"enabled": True, "app_id": ""}
         self.setWindowTitle("Hours N Silence settings")
         self.setModal(False)
         self.viz = copy.deepcopy(viz)
@@ -94,6 +96,27 @@ class SettingsDialog(QDialog):
         row.addWidget(self.intensity, 1)
         root.addLayout(row)
 
+        dhead = QLabel("DISCORD")
+        dhead.setObjectName("heading")
+        root.addWidget(dhead)
+        self.discord_on = QCheckBox("Show what I'm listening to on Discord")
+        self.discord_on.setChecked(bool(discord.get("enabled", True)))
+        self.discord_on.toggled.connect(self._push_discord)
+        root.addWidget(self.discord_on)
+        drow = QHBoxLayout()
+        dlab = QLabel("Application ID")
+        dlab.setObjectName("subtitle")
+        self.discord_id = QLineEdit(discord.get("app_id", ""))
+        self.discord_id.setPlaceholderText("paste the ID from discord.com/developers/applications")
+        self.discord_id.editingFinished.connect(self._push_discord)
+        drow.addWidget(dlab)
+        drow.addWidget(self.discord_id, 1)
+        root.addLayout(drow)
+        dhint = QLabel("Once: discord.com/developers/applications, New Application, name it Hours N Silence, copy its Application ID here.")
+        dhint.setObjectName("status")
+        dhint.setWordWrap(True)
+        root.addWidget(dhint)
+
         buttons = QHBoxLayout()
         reset = QPushButton("Reset colors")
         reset.setObjectName("flat")
@@ -113,6 +136,9 @@ class SettingsDialog(QDialog):
         for _, btn in self.rows.values():
             btn.setEnabled(custom)
         self.cover.setEnabled(custom)
+
+    def _push_discord(self, *_):
+        self.discord_changed.emit(self.discord_on.isChecked(), self.discord_id.text().strip())
 
     def _reset(self):
         for key, (on, btn) in self.rows.items():

@@ -6,3 +6,4 @@ comtypes>=1.4
 pillow>=10.0
 PyAudioWPatch>=0.2.12
 numpy>=1.26
+pypresence>=4.6

@@ -68,6 +68,13 @@ play, pause, next, previous, jump to a spot, shuffle, repeat, and volume.
   art, song, artist, the level, and which device moved. Never takes focus,
   fades after three seconds. Also shows when a new song starts while the
   full window is out of the way.
+- **Discord presence**: "Listening to Hours N Silence" with the song, artist
+  and album, a progress bar and the cover, on your Discord profile while
+  Discord is running. Discord shows presence under an "application" you
+  create once at discord.com/developers/applications (New Application, name
+  it Hours N Silence); paste its Application ID into Settings. Covers come
+  from Apple's public search. Only the song title, artist, album and timing
+  leave the machine.
 - **Playlist covers** are the art you dragged onto playlists in iTunes.
   Playlists without one borrow the playing song's art.
 - **Descriptions** appear once iTunes' XML export is on (Edit, Preferences,
@@ -146,6 +153,7 @@ All of them run against a live iTunes and put playback back the way it was.
 - `hoursnsilence/volume.py` - watches every output device's volume
 - `hoursnsilence/covers.py` - playlist covers out of iTunes' artwork cache
 - `hoursnsilence/descriptions.py` - playlist descriptions from the XML export
+- `hoursnsilence/discord_presence.py` - Discord Rich Presence
 - `hoursnsilence/palette.py` - colors from art: the accent and the visualizer palette
 - `hoursnsilence/state.py` - recents, rail state and settings between runs
 - `hoursnsilence/ui/` - main window, rail, playlist page, backdrop, mini player,

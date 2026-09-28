@@ -17,6 +17,7 @@ class State:
         self.recent = []            # playlist persistent ids, newest first
         self.rail_expanded = False
         self.viz = copy.deepcopy(DEFAULT_VIZ)
+        self.discord = {"enabled": True, "app_id": ""}
         self.load()
 
     def load(self):
@@ -38,15 +39,22 @@ class State:
                 if isinstance(s.get("color"), str) and s["color"].startswith("#"):
                     el["color"] = s["color"]
             self.viz = viz
+            d = data.get("discord") or {}
+            self.discord = {"enabled": bool(d.get("enabled", True)), "app_id": str(d.get("app_id", "")).strip()}
         except Exception:
             pass
 
     def save(self):
         try:
             with open(STATE_PATH, "w", encoding="utf-8") as f:
-                json.dump({"recent": self.recent, "rail_expanded": self.rail_expanded, "viz": self.viz}, f, indent=2)
+                json.dump({"recent": self.recent, "rail_expanded": self.rail_expanded, "viz": self.viz,
+                           "discord": self.discord}, f, indent=2)
         except Exception:
             pass
+
+    def set_discord(self, enabled, app_id):
+        self.discord = {"enabled": bool(enabled), "app_id": (app_id or "").strip()}
+        self.save()
 
     def set_viz(self, viz):
         self.viz = copy.deepcopy(viz)
