@@ -77,8 +77,10 @@ play, pause, next, previous, jump to a spot, shuffle, repeat, and volume.
   leave the machine.
 - **Playlist covers** are the art you dragged onto playlists in iTunes.
   Playlists without one borrow the playing song's art.
-- **Descriptions** appear once iTunes' XML export is on (Edit, Preferences,
-  Advanced, "Share iTunes Library XML with other applications").
+- **Descriptions** you wrote for playlists show on the cards and the
+  playlist page. iTunes only hands them out through its XML export, so tick
+  it once: Edit, Preferences, Advanced, "Share iTunes Library XML with other
+  applications".
 
 Media keys keep working: iTunes handles them and Hours N Silence updates.
 
@@ -159,7 +161,10 @@ All of them run against a live iTunes and put playback back the way it was.
 - `hoursnsilence/ui/` - main window, rail, playlist page, backdrop, mini player,
   sparks, popup, settings, theme, glass, shared widgets
 - `assets/hours_n_silence.ico` - the icon, drawn by `tools/make_shortcut.py`
-- `tools/` - shortcut maker, tests, resource check, screenshot helper
+- `docs/DJ.md` - the AI DJ plan
+- `tools/` - shortcut maker, tests, resource check, library export for the
+  DJ, `push_public.py` (publish to the showcase repo, with a check that no
+  private file is tracked)
 
 ---
 

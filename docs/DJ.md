@@ -53,5 +53,8 @@ from R&B to rap. Nobody else has that data.
 
 ## Status
 
-- Step 1 done: `python tools/library_export.py` writes `dj/library.json`.
-- Next: step 2, vibe cards.
+- Step 1 done (2026-09-28): `python tools/library_export.py` writes
+  `dj/library.json`: every song's facts and every playlist's play order.
+- Next: step 2, vibe cards. One-time pass over the library on the API,
+  cached, so it is a few dollars once and free after.
+- Then steps 3 to 5 in order.
