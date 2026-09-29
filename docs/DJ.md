@@ -16,13 +16,20 @@ to the queue.
 
 ## What is ours
 
+This catalogue is a body of work, made on purpose over nine years to hold
+how its author felt across those years. The DJ's job is to learn it well
+enough to continue it in the same hand, never to be clever with it. Treat
+every sequence, cut, cover and title as a decision, and keep the tone of
+anything shown to the owner respectful of that.
+
 The skrt series is the owner's own catalogue: `skrt N` playlists are his
 albums, and the `skrt N.1`, `N.2` ... playlists are mixtapes that each tell
 a story in order. Some songs are trimmed in iTunes (a start and stop time
 on the track) and spliced: in skrt 4, "Calling For You" plays as its first
 111 seconds, another song sits between, then the same song returns from
 182 seconds to the end as the 21 Savage half. Passionfruit starts at 60
-seconds. Forty songs in the library carry trims like that. Those trims are
+seconds. Forty songs in the library carry trims like that. The "description" on a
+skrt playlist is the project's TITLE, not a blurb: show it as a title. Those trims are
 the owner marking where a song's good part begins and ends, and the splices
 are how he builds a transition. The vibe cards and the set builder must read
 the trims (exported as start/finish) and learn the splice moves, not just
@@ -55,6 +62,13 @@ from R&B to rap. Nobody else has that data.
    the queue.
 5. **It learns**: skips during a set count against that placement; songs
    left to ride are reinforced; new playlists feed the taste model.
+6. **Own model, offline**: once steps 2 to 4 work with Claude as the brain,
+   turn the 4,904 placements, the 40 splices and the project titles into
+   training examples ("after these three songs, in this mood, the next song
+   and its cut is ...") and fine-tune a small open model with Unsloth
+   (QLoRA) on FERINA's 5070 (12 GB is enough for a 3B to 8B model). The
+   result runs offline, costs nothing per set, and has only ever learned
+   from this one catalogue. Same tooling BRAIN plans for the email sorter.
 
 ## Rules
 
