@@ -16,6 +16,18 @@ to the queue.
 
 ## What is ours
 
+The skrt series is the owner's own catalogue: `skrt N` playlists are his
+albums, and the `skrt N.1`, `N.2` ... playlists are mixtapes that each tell
+a story in order. Some songs are trimmed in iTunes (a start and stop time
+on the track) and spliced: in skrt 4, "Calling For You" plays as its first
+111 seconds, another song sits between, then the same song returns from
+182 seconds to the end as the 21 Savage half. Passionfruit starts at 60
+seconds. Forty songs in the library carry trims like that. Those trims are
+the owner marking where a song's good part begins and ends, and the splices
+are how he builds a transition. The vibe cards and the set builder must read
+the trims (exported as start/finish) and learn the splice moves, not just
+the song order.
+
 The taste model is the owner's own playlists. Hours In Silence parts 1 to 8
 are songs sequenced by hand, on purpose. The builder learns what sits next
 to what, how long a vibe lasts before it moves, and how the owner crosses

@@ -25,7 +25,8 @@ def track_record(t):
            "duration": t.Duration, "kind": t.KindAsString}
     for key, attr in (("genre", "Genre"), ("year", "Year"), ("plays", "PlayedCount"), ("skips", "SkippedCount"),
                       ("rating", "Rating"), ("bpm", "BPM"), ("track_number", "TrackNumber"),
-                      ("album_artist", "AlbumArtist"), ("compilation", "Compilation")):
+                      ("album_artist", "AlbumArtist"), ("compilation", "Compilation"),
+                      ("start", "Start"), ("finish", "Finish")):
         try:
             rec[key] = getattr(t, attr)
         except Exception:
@@ -36,6 +37,8 @@ def track_record(t):
             rec[key] = v.strftime("%Y-%m-%d %H:%M") if v and v.year > 1900 else None
         except Exception:
             rec[key] = None
+    # a trim is the owner marking where the good part begins and ends
+    rec["trimmed"] = bool((rec.get("start") or 0) > 0 or (rec.get("finish") or rec["duration"]) < rec["duration"])
     return rec
 
 
@@ -75,6 +78,7 @@ def main():
     print(f"songs {len(tracks)} | playlists {len(playlists)} | {time.time() - t0:.1f}s")
     print(f"with genre {with_genre} | with BPM tag {with_bpm} | ever played {played}")
     print("kinds:", kinds)
+    print("trimmed songs:", sum(1 for t in tracks if t.get("trimmed")))
     top = sorted(tracks, key=lambda t: -(t.get("plays") or 0))[:5]
     print("most played:", [(t["artist"], t["name"], t["plays"]) for t in top])
     return 0
